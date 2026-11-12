@@ -1,0 +1,12 @@
+# Verified against the signed SHA256SUMS published by kernel.org.
+# Updating this pin requires a reviewed checksum/signature verification.
+schema = 1
+name = "linux"
+version = "6.18.63"
+channel = "longterm"
+architecture = "x86_64"
+archive = "linux-6.18.63.tar.xz"
+url = "https://cdn.kernel.org/pub/linux/kernel/v6.x/linux-6.18.63.tar.xz"
+sha256 = "81764a545072d160748beff4d9de2e7d95aa9f16e8261110288f067a2cc61d71"
+source_date_epoch = 1794268800
+top_dir = "linux-6.18.63"
