@@ -44,16 +44,20 @@ for key in ("version", "url", "sha256", "archive", "top_dir"):
 PY
 )"
             curl --fail --location --retry 3 --output "$ARCHIVE" "$URL"
-            printf "%s  %s\n" "$SHA256" "$ARCHIVE" | sha256sum --check --strict
+            printf "%s  %s\\n" "$SHA256" "$ARCHIVE" | sha256sum --check --strict
             mkdir -p /work/.kernel-source
             tar -xf "$ARCHIVE" --directory /work/.kernel-source
             test -f "/work/.kernel-source/$TOP_DIR/Makefile"
-            printf "Verified and extracted Linux %s\n" "$VERSION"
+            printf "Verified and extracted Linux %s\\n" "$VERSION"
           '
 
-      - name: Configure and compile kernel with Rust
+      - name: Configure, compile and stage kernel modules
+        env:
+          TOP_DIR: ${{ fromJSON(format('" {0} "', 'linux-7.3.4')) }}
         run: |
-          docker run --rm --volume "${{ github.workspace }}/.kernel-source:/src" --workdir /src/linux-7.3.4 bkernel-kernel-build:ci sh -ec '
+          TOP_DIR="$(python3 -c 'import pathlib,tomllib; print(tomllib.loads(pathlib.Path("kernel-source.toml").read_text())["top_dir"])')"
+          test -n "$TOP_DIR"
+          docker run --rm --volume "${{ github.workspace }}/.kernel-source:/src" --workdir "/src/$TOP_DIR" bkernel-kernel-build:ci sh -ec '
             make LLVM=1 rustavailable
             make LLVM=1 x86_64_defconfig
             scripts/config --enable RUST
@@ -61,19 +65,57 @@ PY
             grep -q "^CONFIG_RUST=y$" .config
             grep -q "^CONFIG_64BIT=y$" .config
             grep -q "^CONFIG_X86_64=y$" .config
+
             make LLVM=1 -j2 bzImage modules
             test -s arch/x86/boot/bzImage
+
+            KERNELRELEASE="$(make -s kernelrelease)"
+            test -n "$KERNELRELEASE"
+            MODULE_STAGING=/src/modules-staging
+            MODULE_ROOT="$MODULE_STAGING/lib/modules/$KERNELRELEASE"
+            rm -rf "$MODULE_STAGING"
+            make LLVM=1 modules_install INSTALL_MOD_PATH="$MODULE_STAGING"
+            test -d "$MODULE_ROOT"
+
+            depmod -a -b "$MODULE_STAGING" "$KERNELRELEASE"
+            test -s "$MODULE_ROOT/modules.dep"
+            test -s "$MODULE_ROOT/modules.alias"
+
             mkdir -p /src/build-evidence
             cp arch/x86/boot/bzImage .config System.map /src/build-evidence/
             cp include/config/kernel.release /src/build-evidence/kernel.release
+            cp "$MODULE_ROOT/modules.dep" "$MODULE_ROOT/modules.alias" /src/build-evidence/
+            if test -s "$MODULE_ROOT/modules.symbols"; then
+              cp "$MODULE_ROOT/modules.symbols" /src/build-evidence/
+            fi
+
+            (cd "$MODULE_ROOT" && find . -type f -name "*.ko*" -print | LC_ALL=C sort) > /src/build-evidence/modules.inventory
+            MODULE_COUNT="$(wc -l < /src/build-evidence/modules.inventory)"
+            test "$MODULE_COUNT" -gt 0
+            FIRST_MODULE="$(head -n 1 /src/build-evidence/modules.inventory)"
+            test -n "$FIRST_MODULE"
+            modinfo "$MODULE_ROOT/$FIRST_MODULE" > /src/build-evidence/sample-module.modinfo
+            VERMAGIC="$(modinfo -F vermagic "$MODULE_ROOT/$FIRST_MODULE")"
+            case "$VERMAGIC" in
+              "$KERNELRELEASE "*) ;;
+              *) printf "Unexpected module vermagic: %s (kernel: %s)\\n" "$VERMAGIC" "$KERNELRELEASE" >&2; exit 1 ;;
+            esac
+            {
+              printf "kernel_release=%s\\n" "$KERNELRELEASE"
+              printf "installed_module_count=%s\\n" "$MODULE_COUNT"
+              printf "module_root=lib/modules/%s\\n" "$KERNELRELEASE"
+              printf "depmod=passed\\n"
+              printf "sample_module_vermagic=%s\\n" "$VERMAGIC"
+            } > /src/build-evidence/modules-install.txt
+
             clang --version | head -n 1 > /src/build-evidence/toolchain.txt
             rustc --version >> /src/build-evidence/toolchain.txt
             bindgen --version >> /src/build-evidence/toolchain.txt
-            sha256sum /src/build-evidence/bzImage /src/build-evidence/.config /src/build-evidence/System.map /src/build-evidence/kernel.release > /src/build-evidence/SHA256SUMS
-            printf "Built Linux 7.3.4 x86_64 bzImage and modules with Rust enabled\n"
+            sha256sum /src/build-evidence/bzImage /src/build-evidence/.config /src/build-evidence/System.map /src/build-evidence/kernel.release /src/build-evidence/modules.dep /src/build-evidence/modules.alias /src/build-evidence/modules.inventory /src/build-evidence/modules-install.txt > /src/build-evidence/SHA256SUMS
+            printf "Built Linux %s x86_64 bzImage; installed and indexed %s modules for %s\\n" "$KERNELRELEASE" "$MODULE_COUNT" "$KERNELRELEASE"
           '
 
-      - name: Upload kernel build evidence
+      - name: Upload kernel and module build evidence
         uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
         with:
           name: bkernel-linux-7.3.4-x86_64-rust-build
