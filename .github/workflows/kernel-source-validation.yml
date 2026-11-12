@@ -53,7 +53,7 @@ jobs:
 
       - name: Validate Rust support and baseline configuration
         run: |
-          docker run --rm --volume "${{ github.workspace }}/.kernel-source:/src:ro" --workdir /src/linux-7.3.4 bkernel-kernel-build:ci sh -ec '
+          docker run --rm --volume "${{ github.workspace }}/.kernel-source:/src" --workdir /src/linux-7.3.4 bkernel-kernel-build:ci sh -ec '
             make LLVM=1 rustavailable
             make LLVM=1 x86_64_defconfig
             make LLVM=1 olddefconfig
