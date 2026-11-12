@@ -63,5 +63,20 @@ PY
             grep -q "^CONFIG_X86_64=y$" .config
             make LLVM=1 -j2 bzImage modules
             test -s arch/x86/boot/bzImage
+            mkdir -p /src/build-evidence
+            cp arch/x86/boot/bzImage .config System.map /src/build-evidence/
+            cp include/config/kernel.release /src/build-evidence/kernel.release
+            clang --version | head -n 1 > /src/build-evidence/toolchain.txt
+            rustc --version >> /src/build-evidence/toolchain.txt
+            bindgen --version >> /src/build-evidence/toolchain.txt
+            sha256sum /src/build-evidence/bzImage /src/build-evidence/.config /src/build-evidence/System.map /src/build-evidence/kernel.release > /src/build-evidence/SHA256SUMS
             printf "Built Linux 7.3.4 x86_64 bzImage and modules with Rust enabled\n"
           '
+
+      - name: Upload kernel build evidence
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        with:
+          name: bkernel-linux-7.3.4-x86_64-rust-build
+          path: .kernel-source/build-evidence/
+          if-no-files-found: error
+          retention-days: 14
