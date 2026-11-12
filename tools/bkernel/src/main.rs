@@ -236,15 +236,13 @@ fn run() -> Result<(), String> {
                 "verify" => {
                     let archive = args
                         .next()
-                        .map(PathBuf::from)
-                        .unwrap_or_else(|| PathBuf::from("target/sources").join(&pin.archive));
+                        .map_or_else(|| PathBuf::from("target/sources").join(&pin.archive), PathBuf::from);
                     verify_archive(&archive, &pin.sha256)?;
                 }
                 "fetch" => {
                     let cache_dir = args
                         .next()
-                        .map(PathBuf::from)
-                        .unwrap_or_else(|| PathBuf::from("target/sources"));
+                        .map_or_else(|| PathBuf::from("target/sources"), PathBuf::from);
                     fetch_source(&cache_dir, &pin)?;
                 }
                 _ => return Err(format!("unknown source operation: {operation}")),
