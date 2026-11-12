@@ -1,0 +1,16 @@
+schema = 1
+architecture = "linux/amd64"
+base_image = "debian@sha256:fbfb4059d2127120aa05b6e6064523d2102552f0cf0026ddf0701c12f1f8f3e0"
+debian_suite = "trixie"
+debian_snapshot = "20261104T000000Z"
+dockerfile = "containers/kernel-build.Dockerfile"
+
+# Package versions are resolved only from the immutable Debian snapshot above.
+# CI records the complete dpkg-query inventory as a build artifact.
+packages = [
+  "bc", "bison", "build-essential", "ca-certificates", "clang", "cpio",
+  "curl", "dwarves", "flex", "git", "kmod", "libelf-dev", "libncurses-dev",
+  "libssl-dev", "libudev-dev", "libclang-dev", "lld", "llvm", "make",
+  "openssl", "pahole", "perl", "python3", "rsync", "rustc", "cargo",
+  "xz-utils", "zstd"
+]
