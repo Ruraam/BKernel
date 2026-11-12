@@ -1,6 +1,6 @@
 # Build workflow
 
-This document describes the intended workflow. The repository does not yet pin a Linux release, so a complete kernel build is intentionally not enabled.
+This document describes the intended workflow. The repository pins Linux 7.3.4; a complete kernel build remains disabled until the build toolchain and configuration are pinned.
 
 ## Prerequisites
 
@@ -25,7 +25,7 @@ cargo test --workspace
 
 ## Planned kernel build
 
-A kernel build becomes reproducible only after `kernel-source.toml` records:
+The source pin is now recorded in `kernel-source.toml`. A complete kernel build becomes reproducible only after the manifest also records:
 - upstream repository URL;
 - release tag;
 - full commit SHA;
