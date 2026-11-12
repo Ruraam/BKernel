@@ -112,9 +112,9 @@ jobs:
             --env "NVIDIA_PACKAGE=$NVIDIA_PACKAGE" \
             --env "NVIDIA_URL=$NVIDIA_URL" \
             --env "NVIDIA_SHA256=$NVIDIA_SHA256" \
+            --env "TOP_DIR=$TOP_DIR" \
             --volume "${{ github.workspace }}:/work" --workdir "/work/.kernel-source/$TOP_DIR" bkernel-kernel-build:ci sh -ec '
-            KERNEL_BUILD_DIR="$(find /work/.kernel-source -mindepth 2 -maxdepth 2 -type f -name Makefile -printf '%h\\n' | head -n 1)"
-            test -n "$KERNEL_BUILD_DIR"
+            KERNEL_BUILD_DIR="/work/.kernel-source/$TOP_DIR"
             KERNEL_BUILD_DIR="$(readlink -f "$KERNEL_BUILD_DIR")"
             printf "Kernel source directory: <%s>\\n" "$KERNEL_BUILD_DIR"
             test -f "$KERNEL_BUILD_DIR/Makefile"
@@ -150,7 +150,8 @@ jobs:
             # The container workdir is already the verified source tree.
             # Avoid passing a shell variable through make's -C option.
             KERNEL_RELEASE="$(make -s -C "$KERNEL_BUILD_DIR" LLVM=1 ARCH=x86_64 kernelrelease)"
-            test -n "$KERNEL_RELEASE"
+            test "$KERNEL_RELEASE" = "7.3.4-zen2"
+            printf "Verified kernel release: <%s>\\n" "$KERNEL_RELEASE"
 
             # Compile NVIDIA's proprietary Pascal modules against this exact build.
             NVIDIA_WORK=/tmp/bkernel-nvidia-build
@@ -182,6 +183,7 @@ jobs:
             find "$NVIDIA_SOURCE/kernel" -maxdepth 1 -type f -name '"'"'*.ko'"'"' -printf '"'"'%f\\n'"'"' | sort > /work/build-evidence/nvidia-modules.txt
             grep -qx '"'"'nvidia.ko'"'"' /work/build-evidence/nvidia-modules.txt
             grep -qx '"'"'nvidia-modeset.ko'"'"' /work/build-evidence/nvidia-modules.txt
+            grep -qx '"'"'nvidia-uvm.ko'"'"' /work/build-evidence/nvidia-modules.txt
             grep -qx '"'"'nvidia-drm.ko'"'"' /work/build-evidence/nvidia-modules.txt
             sha256sum "$NVIDIA_SOURCE"/kernel/*.ko > /work/build-evidence/nvidia-modules.SHA256SUMS
             rm -rf "$NVIDIA_WORK"
