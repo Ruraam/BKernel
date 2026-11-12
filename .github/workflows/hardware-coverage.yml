@@ -143,7 +143,7 @@ jobs:
             make LLVM=1 ARCH=x86_64 modules_install INSTALL_MOD_PATH=/work/build-evidence/modules
 
             # Compile NVIDIA's proprietary Pascal modules against this exact build.
-            NVIDIA_WORK=/work/build-evidence/nvidia-build
+            NVIDIA_WORK=/tmp/bkernel-nvidia-build
             mkdir -p "$NVIDIA_WORK"
             curl --fail --location --retry 3 --output "$NVIDIA_WORK/$NVIDIA_PACKAGE" "$NVIDIA_URL"
             printf "%s  %s\\n" "$NVIDIA_SHA256" "$NVIDIA_WORK/$NVIDIA_PACKAGE" | sha256sum --check --strict
