@@ -17,7 +17,7 @@ RUN rm -f /etc/apt/sources.list /etc/apt/sources.list.d/debian.sources \
     && apt-get install -y --no-install-recommends \
        bc bison build-essential ca-certificates clang cpio curl dwarves flex \
        git kmod libelf-dev libncurses-dev libssl-dev libudev-dev libclang-dev \
-       lld llvm make openssl pahole perl python3 rsync rustc cargo xz-utils zstd \
+       lld llvm make openssl perl python3 rsync rustc cargo xz-utils zstd \
     && apt-get clean \
     && rm -rf /var/lib/apt/lists/*
 
