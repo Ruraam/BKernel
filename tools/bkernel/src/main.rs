@@ -1,4 +1,4 @@
-//! BKernel build and validation command-line tool.
+//! `BKernel` build and validation command-line tool.
 
 use std::env;
 use std::process::ExitCode;
@@ -20,8 +20,8 @@ fn print_help() {
 fn run() -> Result<(), String> {
     let mut args = env::args().skip(1);
     match args.next().as_deref() {
-        None | Some("help") | Some("--help") | Some("-h") => print_help(),
-        Some("version") | Some("--version") | Some("-V") => {
+        None | Some("help" | "--help" | "-h") => print_help(),
+        Some("version" | "--version" | "-V") => {
             println!("bkernel {VERSION}");
         }
         Some("status") => {
@@ -56,6 +56,6 @@ fn main() -> ExitCode {
 mod tests {
     #[test]
     fn version_is_defined() {
-        assert!(!env!("CARGO_PKG_VERSION").is_empty());
+        assert_ne!(env!("CARGO_PKG_VERSION"), "");
     }
 }
