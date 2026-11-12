@@ -21,7 +21,7 @@ The kernel build container is defined by:
 - `containers/kernel-build.Dockerfile`;
 - `containers/build-environment.lock`;
 - an immutable Debian OCI image digest;
-- Debian Trixie package repositories frozen at snapshot `20261104T000000Z`.
+- Debian Trixie package repositories frozen at snapshot `20261104T212339Z`, matching the package state used to construct the base image. The image includes the kernel's Rust prerequisites (rustc, rust-src, bindgen, rustfmt and clippy).
 
 Build and inspect it:
 
