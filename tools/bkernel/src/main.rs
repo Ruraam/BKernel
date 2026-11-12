@@ -205,7 +205,7 @@ fn run() -> Result<(), String> {
         Some("version" | "--version" | "-V") => println!("bkernel {VERSION}"),
         Some("status") => {
             println!("BKernel tooling: initialized");
-            println!("Kernel source pin: Linux 6.18.63 LTS");
+            println!("Kernel source pin: Linux 7.3.4");
             println!("Kernel build: not enabled yet; toolchain and config pinning are next");
             println!("Rust tooling: pinned by rust-toolchain.toml");
         }
@@ -262,8 +262,8 @@ mod tests {
 
     #[test]
     fn parses_manifest_values() {
-        let manifest = "version = \"6.18.63\"\nsha256 = \"abc\"\n";
-        assert_eq!(manifest_value(manifest, "version"), Ok("6.18.63"));
+        let manifest = "version = \"7.3.4\"\nsha256 = \"abc\"\n";
+        assert_eq!(manifest_value(manifest, "version"), Ok("7.3.4"));
         assert_eq!(manifest_value(manifest, "sha256"), Ok("abc"));
         assert!(manifest_value(manifest, "missing").is_err());
     }
@@ -271,18 +271,18 @@ mod tests {
     #[test]
     fn parses_pinned_source_manifest() {
         let manifest = concat!(
-            "version = \"6.18.63\"\n",
-            "archive = \"linux-6.18.63.tar.xz\"\n",
-            "url = \"https://cdn.kernel.org/linux-6.18.63.tar.xz\"\n",
-            "sha256 = \"81764a545072d160748beff4d9de2e7d95aa9f16e8261110288f067a2cc61d71\"\n",
-            "top_dir = \"linux-6.18.63\"\n"
+            "version = \"7.3.4\"\n",
+            "archive = \"linux-7.3.4.tar.xz\"\n",
+            "url = \"https://cdn.kernel.org/linux-7.3.4.tar.xz\"\n",
+            "sha256 = \"b11b6df8295e8e991ff040b71aaa4994a8b55caa23b6b092907f195b5840fd1f\"\n",
+            "top_dir = \"linux-7.3.4\"\n"
         );
         let pin = SourcePin {
-            version: "6.18.63".to_owned(),
-            archive: "linux-6.18.63.tar.xz".to_owned(),
-            url: "https://cdn.kernel.org/linux-6.18.63.tar.xz".to_owned(),
-            sha256: "81764a545072d160748beff4d9de2e7d95aa9f16e8261110288f067a2cc61d71".to_owned(),
-            top_dir: "linux-6.18.63".to_owned(),
+            version: "7.3.4".to_owned(),
+            archive: "linux-7.3.4.tar.xz".to_owned(),
+            url: "https://cdn.kernel.org/linux-7.3.4.tar.xz".to_owned(),
+            sha256: "b11b6df8295e8e991ff040b71aaa4994a8b55caa23b6b092907f195b5840fd1f".to_owned(),
+            top_dir: "linux-7.3.4".to_owned(),
         };
         let path = std::env::temp_dir().join(format!("bkernel-manifest-test-{}", std::process::id()));
         std::fs::write(&path, manifest).expect("write temporary test manifest");
