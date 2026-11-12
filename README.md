@@ -25,7 +25,7 @@ Absolute binary compatibility cannot be promised across arbitrary kernel version
 ## Initial scope
 
 - Architecture: x86_64 first.
-- Kernel source: unmodified upstream Linux baseline, pinned to an explicit stable release and commit.
+- Kernel source: unmodified upstream Linux baseline, initially pinned to the official Linux 7.3.4 release archive by SHA-256.
 - Boot: Limine, UEFI and BIOS where supported by the selected platform and kernel configuration.
 - Build: upstream Linux Kbuild; Rust-based orchestration and validation tools.
 - Packaging: Debian packages first; ULPM LPK as a second delivery format.
