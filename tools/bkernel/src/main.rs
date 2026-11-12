@@ -6,7 +6,7 @@ use std::path::{Path, PathBuf};
 use std::process::{Command, ExitCode};
 
 const VERSION: &str = env!("CARGO_PKG_VERSION");
-const SOURCE_MANIFEST: &str = "../../kernel-source.toml";
+
 
 #[derive(Debug, PartialEq, Eq)]
 struct SourcePin {
@@ -213,7 +213,7 @@ fn run() -> Result<(), String> {
             let operation = args.next().ok_or_else(|| {
                 "missing source operation; use 'source verify' or 'source fetch'".to_owned()
             })?;
-            let manifest_path = Path::new(SOURCE_MANIFEST);
+            let manifest_path = Path::new(env!("CARGO_MANIFEST_DIR")).join("../../kernel-source.toml");
             let pin = load_source_pin(manifest_path)?;
 
             match operation.as_str() {
