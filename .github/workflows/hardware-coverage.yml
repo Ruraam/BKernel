@@ -18,6 +18,8 @@ on:
   pull_request:
     paths:
       - "kernel-source.toml"
+      - "zen-source.toml"
+      - "scripts/validate-zen-lock.py"
       - "containers/kernel-build.Dockerfile"
       - "scripts/validate-hardware-coverage.py"
       - "scripts/validate-nvidia-profile.py"
@@ -83,8 +85,8 @@ PY
 )"
             curl --fail --location --retry 3 --output "$PATCH" "$PATCH_URL"
             curl --fail --location --retry 3 --output "$SIGNATURE" "$SIGNATURE_URL"
-            printf "%s  %s\\n" "$PATCH_SHA256" "$PATCH" | sha256sum --check --strict
-            printf "%s  %s\\n" "$SIGNATURE_SHA256" "$SIGNATURE" | sha256sum --check --strict
+            printf "%s  %s\n" "$PATCH_SHA256" "$PATCH" | sha256sum --check --strict
+            printf "%s  %s\n" "$SIGNATURE_SHA256" "$SIGNATURE" | sha256sum --check --strict
             zstd --decompress --stdout "$PATCH" > /work/zen.patch
             test -s /work/zen.patch
             cd "/work/.kernel-source/linux-$BASE_VERSION"
@@ -121,7 +123,7 @@ PY
       - name: Upload hardware coverage evidence
         uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
         with:
-          name: bkernel-linux-7.3.4-x86_64-hardware-coverage
+          name: bkernel-linux-7.3.4-zen2-x86_64-hardware-coverage
           path: build-evidence/
           if-no-files-found: error
           retention-days: 14
