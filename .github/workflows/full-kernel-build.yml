@@ -52,8 +52,6 @@ PY
           '
 
       - name: Configure, compile and stage kernel modules
-        env:
-          TOP_DIR: ${{ fromJSON(format('" {0} "', 'linux-7.3.4')) }}
         run: |
           TOP_DIR="$(python3 -c 'import pathlib,tomllib; print(tomllib.loads(pathlib.Path("kernel-source.toml").read_text())["top_dir"])')"
           test -n "$TOP_DIR"
