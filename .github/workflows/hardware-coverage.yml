@@ -16,6 +16,9 @@ on:
       - "kernel-source.toml"
       - "containers/kernel-build.Dockerfile"
       - "scripts/validate-hardware-coverage.py"
+      - "scripts/validate-nvidia-profile.py"
+      - "configs/x86_64/bubbleos-desktop.config"
+      - "configs/x86_64/nvidia-pascal.config"
       - ".github/workflows/hardware-coverage.yml"
   workflow_dispatch:
 
