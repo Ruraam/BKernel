@@ -10,7 +10,7 @@ ENV DEBIAN_FRONTEND=noninteractive \
     KBUILD_BUILD_HOST=reproducible \
     KBUILD_BUILD_VERSION=1
 ENV KBUILD_BUILD_TIMESTAMP="Tue Nov 10 18:31:00 UTC 2026" \
-    RUST_LIB_SRC=/usr/src/rustc-1.85.0/library
+    RUST_LIB_SRC=/usr/src/rustc-1.85.1/library
 
 RUN rm -f /etc/apt/sources.list /etc/apt/sources.list.d/debian.sources \
     && printf 'deb [check-valid-until=no] http://snapshot.debian.org/archive/debian/20261104T212339Z trixie main\n'  > /etc/apt/sources.list \
@@ -20,7 +20,7 @@ RUN rm -f /etc/apt/sources.list /etc/apt/sources.list.d/debian.sources \
        bc bison build-essential ca-certificates clang cpio curl dwarves flex \
        git kmod libelf-dev libncurses-dev libssl-dev libudev-dev libclang-dev \
        lld llvm make openssl perl python3 rsync rustc rust-src bindgen rustfmt rust-clippy cargo xz-utils zstd \
-    && test -d /usr/src/rustc-1.85.0/library \
+    && test -d /usr/src/rustc-1.85.1/library \
     && apt-get clean \
     && rm -rf /var/lib/apt/lists/*
 
