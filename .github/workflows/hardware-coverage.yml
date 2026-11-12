@@ -5,6 +5,8 @@ on:
     branches: ["main", "ci/**", "feat/**"]
     paths:
       - "kernel-source.toml"
+      - "zen-source.toml"
+      - "scripts/validate-zen-lock.py"
       - "containers/kernel-build.Dockerfile"
       - "scripts/validate-hardware-coverage.py"
       - "scripts/validate-nvidia-profile.py"
@@ -45,6 +47,9 @@ jobs:
       - name: Validate pinned NVIDIA driver metadata
         run: python3 scripts/validate-nvidia-lock.py
 
+      - name: Validate pinned Zen Kernel release metadata
+        run: python3 scripts/validate-zen-lock.py
+
       - name: Build pinned kernel toolchain
         run: docker build --platform linux/amd64 --pull --file containers/kernel-build.Dockerfile --tag bkernel-kernel-build:ci .
 
@@ -64,6 +69,28 @@ PY
             tar -xf "$ARCHIVE" --directory /work/.kernel-source
             test -f "/work/.kernel-source/$TOP_DIR/Makefile"
             printf "Verified Linux %s source archive\n" "$VERSION"
+          '
+
+      - name: Download, verify and apply pinned Zen patch
+        run: |
+          docker run --rm --volume "${{ github.workspace }}:/work" --workdir /work bkernel-kernel-build:ci sh -ec '
+            eval "$(python3 - <<'"'"'PY'"'"'
+import pathlib, shlex, tomllib
+data = tomllib.loads(pathlib.Path("zen-source.toml").read_text())
+for key in ("version", "patch", "patch_url", "patch_sha256", "signature", "signature_url", "signature_sha256", "base_version"):
+    print(f"{key.upper()}={shlex.quote(str(data[key]))}")
+PY
+)"
+            curl --fail --location --retry 3 --output "$PATCH" "$PATCH_URL"
+            curl --fail --location --retry 3 --output "$SIGNATURE" "$SIGNATURE_URL"
+            printf "%s  %s\\n" "$PATCH_SHA256" "$PATCH" | sha256sum --check --strict
+            printf "%s  %s\\n" "$SIGNATURE_SHA256" "$SIGNATURE" | sha256sum --check --strict
+            zstd --decompress --stdout "$PATCH" > /work/zen.patch
+            test -s /work/zen.patch
+            cd "/work/.kernel-source/linux-$BASE_VERSION"
+            patch --dry-run --batch --forward -p1 < /work/zen.patch
+            patch --batch --forward -p1 < /work/zen.patch
+            printf "Applied verified Zen patch %s\\n" "$VERSION"
           '
 
       - name: Generate allmodconfig and audit hardware subsystems
