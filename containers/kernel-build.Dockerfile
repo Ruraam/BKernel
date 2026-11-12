@@ -1,7 +1,7 @@
 # Immutable Debian multi-architecture OCI index; CI builds explicitly for linux/amd64.
 FROM --platform=linux/amd64 debian@sha256:fbfb4059d2127120aa05b6e6064523d2102552f0cf0026ddf0701c12f1f8f3e0
 
-ARG DEBIAN_SNAPSHOT=20261104T000000Z
+ARG DEBIAN_SNAPSHOT=20261104T212339Z
 ENV DEBIAN_FRONTEND=noninteractive \
     LC_ALL=C \
     LANG=C \
@@ -9,7 +9,7 @@ ENV DEBIAN_FRONTEND=noninteractive \
     SOURCE_DATE_EPOCH=1794335460 \
     KBUILD_BUILD_USER=bkernel \
     KBUILD_BUILD_HOST=reproducible \
-    KBUILD_BUILD_VERSION=1
+    KBUILD_BUILD_VERSION=1 \\\n    KBUILD_BUILD_TIMESTAMP="Tue Nov 10 18:31:00 UTC 2026"
 
 RUN rm -f /etc/apt/sources.list /etc/apt/sources.list.d/debian.sources \
     && printf 'deb [check-valid-until=no] http://snapshot.debian.org/archive/debian/%s trixie main\n' "${DEBIAN_SNAPSHOT}" > /etc/apt/sources.list \
