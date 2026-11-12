@@ -97,6 +97,7 @@ PY
 
       - name: Generate allmodconfig and audit hardware subsystems
         run: |
+          mkdir -p build-evidence
           TOP_DIR="$(python3 -c 'import pathlib,tomllib; print(tomllib.loads(pathlib.Path("kernel-source.toml").read_text())["top_dir"])')"
           test -n "$TOP_DIR"
           docker run --rm --volume "${{ github.workspace }}:/work" --workdir "/work/.kernel-source/$TOP_DIR" bkernel-kernel-build:ci sh -ec '
