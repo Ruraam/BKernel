@@ -99,8 +99,20 @@ jobs:
         run: |
           mkdir -p build-evidence
           TOP_DIR="$(python3 -c 'import pathlib,tomllib; print(tomllib.loads(pathlib.Path("kernel-source.toml").read_text())["top_dir"])')"
+          eval "$(python3 - <<'PY'
+          import pathlib, shlex, tomllib
+          data = tomllib.loads(pathlib.Path("drivers/nvidia/version.lock").read_text())
+          for key in ("version", "package", "url", "sha256"):
+              print(f"NVIDIA_{key.upper()}={shlex.quote(str(data[key]))}")
+          PY
+          )"
           test -n "$TOP_DIR"
-          docker run --rm --volume "${{ github.workspace }}:/work" --workdir "/work/.kernel-source/$TOP_DIR" bkernel-kernel-build:ci sh -ec '
+          docker run --rm --user 0:0 \
+            --env "NVIDIA_VERSION=$NVIDIA_VERSION" \
+            --env "NVIDIA_PACKAGE=$NVIDIA_PACKAGE" \
+            --env "NVIDIA_URL=$NVIDIA_URL" \
+            --env "NVIDIA_SHA256=$NVIDIA_SHA256" \
+            --volume "${{ github.workspace }}:/work" --workdir "/work/.kernel-source/$TOP_DIR" bkernel-kernel-build:ci sh -ec '
             make LLVM=1 ARCH=x86_64 allmodconfig
             python3 /work/scripts/validate-hardware-coverage.py .config --report /work/build-evidence/hardware-coverage.txt
             cp .config /work/build-evidence/allmodconfig.config
@@ -131,13 +143,6 @@ jobs:
             make LLVM=1 ARCH=x86_64 modules_install INSTALL_MOD_PATH=/work/build-evidence/modules
 
             # Compile NVIDIA's proprietary Pascal modules against this exact build.
-            eval "$(python3 - <<'PY'
-          import pathlib, shlex, tomllib
-          data = tomllib.loads(pathlib.Path("/work/drivers/nvidia/version.lock").read_text())
-          for key in ("version", "package", "url", "sha256"):
-              print(f"NVIDIA_{key.upper()}={shlex.quote(str(data[key]))}")
-          PY
-          )"
             NVIDIA_WORK=/work/build-evidence/nvidia-build
             mkdir -p "$NVIDIA_WORK"
             curl --fail --location --retry 3 --output "$NVIDIA_WORK/$NVIDIA_PACKAGE" "$NVIDIA_URL"
