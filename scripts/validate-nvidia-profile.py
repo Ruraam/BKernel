@@ -17,6 +17,12 @@ REQUIRED = {
     "DRM KMS helpers": ("CONFIG_DRM_KMS_HELPER", {"y"}),
     "Nouveau": ("CONFIG_DRM_NOUVEAU", {"m", "y"}),
     "kernel modules": ("CONFIG_MODULES", {"y"}),
+    "Rust Kbuild": ("CONFIG_RUST", {"y"}),
+    "module versioning": ("CONFIG_MODVERSIONS", {"y"}),
+    "extended module versioning": ("CONFIG_EXTENDED_MODVERSIONS", {"y"}),
+    "DWARF symbol versioning": ("CONFIG_GENDWARFKSYMS", {"y"}),
+    "DWARF5 debug info": ("CONFIG_DEBUG_INFO_DWARF5", {"y"}),
+    "LTO compatibility mode": ("CONFIG_LTO_NONE", {"y"}),
 }
 
 CONFIG_LINE = re.compile(r"^(CONFIG_[A-Z0-9_]+)=(.*)$")
@@ -59,7 +65,7 @@ def main() -> int:
             print(f"- {failure}", file=sys.stderr)
         return 1
 
-    print("\nNVIDIA Pascal fallback Kconfig validation passed.")
+    print("\nNVIDIA Pascal + Rust + module-versioning Kconfig validation passed.")
     return 0
 
 
