@@ -3,10 +3,10 @@
 
 from __future__ import annotations
 
-import hashlib
 import re
 import sys
 import tomllib
+from datetime import date
 from pathlib import Path
 from urllib.parse import urlparse
 
@@ -53,8 +53,10 @@ def main() -> int:
     if not HEX_SHA256.fullmatch(str(data["sha256"])):
         return fail("sha256 must be exactly 64 lowercase hexadecimal characters")
 
-    if not re.fullmatch(r"20\\d{2}-\\d{2}-\\d{2}", str(data["release_date"])):
-        return fail("release_date must use YYYY-MM-DD")
+    try:
+        date.fromisoformat(str(data["release_date"]))
+    except ValueError:
+        return fail("release_date must be a valid ISO date (YYYY-MM-DD)")
 
     for key in ("url", "sha256_source"):
         parsed = urlparse(str(data[key]))
@@ -68,8 +70,7 @@ def main() -> int:
         return fail("kernel_compatibility has an unsupported state")
 
     print(f"PASS: NVIDIA {data['version']} lock metadata is complete and pinned")
-    print(f"PASS: SHA-256 syntax valid ({hashlib.sha256(data['package'].encode()).hexdigest()[:12]}… package-name check only)")
-    print("NOTE: this validates metadata, not the vendor installer bytes or hardware compatibility")
+    print("NOTE: this validates metadata only, not installer bytes or hardware compatibility")
     return 0
 
 
