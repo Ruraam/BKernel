@@ -92,7 +92,7 @@ PY
             cd "/work/.kernel-source/linux-$BASE_VERSION"
             patch --dry-run --batch --forward -p1 < /work/zen.patch
             patch --batch --forward -p1 < /work/zen.patch
-            printf "Applied verified Zen patch %s\\n" "$VERSION"
+            printf "Applied verified Zen patch %s\n" "$VERSION"
           '
 
       - name: Generate allmodconfig and audit hardware subsystems
