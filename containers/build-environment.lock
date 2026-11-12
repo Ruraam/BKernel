@@ -5,7 +5,7 @@ debian_suite = "trixie"
 debian_snapshot = "20261104T212339Z"
 dockerfile = "containers/kernel-build.Dockerfile"
 
-# Package versions are resolved only from the immutable Debian snapshot above.
+# Main and security package versions are resolved only from the immutable Debian snapshots above.
 # CI records the complete dpkg-query inventory as a build artifact.
 packages = [
   "bc", "bison", "build-essential", "ca-certificates", "clang", "cpio",
