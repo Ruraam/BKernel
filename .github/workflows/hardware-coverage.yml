@@ -142,6 +142,12 @@ jobs:
             cp drivers/gpu/drm/nouveau/nouveau.o /work/build-evidence/
             make LLVM=1 ARCH=x86_64 modules_install INSTALL_MOD_PATH=/work/build-evidence/modules
 
+            # Capture the kernel build directory and release before invoking
+            # the vendor installer, which may alter its own working directory.
+            KERNEL_BUILD_DIR="$PWD"
+            KERNEL_RELEASE="$(make -s LLVM=1 ARCH=x86_64 kernelrelease)"
+            test -n "$KERNEL_RELEASE"
+
             # Compile NVIDIA's proprietary Pascal modules against this exact build.
             NVIDIA_WORK=/tmp/bkernel-nvidia-build
             mkdir -p "$NVIDIA_WORK"
@@ -155,11 +161,9 @@ jobs:
             NVIDIA_SOURCE="$NVIDIA_WORK/NVIDIA-Linux-x86_64-$NVIDIA_VERSION"
             test -f "$NVIDIA_SOURCE/kernel/Makefile"
 
-            KERNEL_RELEASE="$(make -s LLVM=1 ARCH=x86_64 kernelrelease)"
-            test -n "$KERNEL_RELEASE"
             mkdir -p "/lib/modules/$KERNEL_RELEASE"
-            ln -s "$PWD" "/lib/modules/$KERNEL_RELEASE/build"
-            ln -s "$PWD" "/lib/modules/$KERNEL_RELEASE/source"
+            ln -s "$KERNEL_BUILD_DIR" "/lib/modules/$KERNEL_RELEASE/build"
+            ln -s "$KERNEL_BUILD_DIR" "/lib/modules/$KERNEL_RELEASE/source"
             {
               printf "Driver: %s\\nKernel: %s\\n" "$NVIDIA_VERSION" "$KERNEL_RELEASE"
               printf "Compiler: %s\\n" "$(clang --version | head -n 1)"
