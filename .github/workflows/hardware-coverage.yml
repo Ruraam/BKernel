@@ -113,6 +113,8 @@ jobs:
             --env "NVIDIA_URL=$NVIDIA_URL" \
             --env "NVIDIA_SHA256=$NVIDIA_SHA256" \
             --volume "${{ github.workspace }}:/work" --workdir "/work/.kernel-source/$TOP_DIR" bkernel-kernel-build:ci sh -ec '
+            KERNEL_BUILD_DIR="$(pwd -P)"
+            test -f "$KERNEL_BUILD_DIR/Makefile"
             make LLVM=1 ARCH=x86_64 allmodconfig
             python3 /work/scripts/validate-hardware-coverage.py .config --report /work/build-evidence/hardware-coverage.txt
             cp .config /work/build-evidence/allmodconfig.config
@@ -142,9 +144,11 @@ jobs:
             cp drivers/gpu/drm/nouveau/nouveau.o /work/build-evidence/
             make LLVM=1 ARCH=x86_64 modules_install INSTALL_MOD_PATH=/work/build-evidence/modules
 
-            # The vendor .run archive is extracted in a subshell. Resolve the
-            # kernel tree and release again afterwards in this parent shell so
-            # the module build never receives empty paths or an empty release.
+            # Pin the kernel release before vendor extraction. Use explicit -C
+            # paths below so NVIDIA's build does not depend on the current directory.
+            KERNEL_RELEASE="$(make -s -C "$KERNEL_BUILD_DIR" LLVM=1 ARCH=x86_64 kernelrelease)"
+            test -n "$KERNEL_RELEASE"
+
             # Compile NVIDIA's proprietary Pascal modules against this exact build.
             NVIDIA_WORK=/tmp/bkernel-nvidia-build
             mkdir -p "$NVIDIA_WORK"
@@ -158,12 +162,6 @@ jobs:
             NVIDIA_SOURCE="$NVIDIA_WORK/NVIDIA-Linux-x86_64-$NVIDIA_VERSION"
             test -f "$NVIDIA_SOURCE/kernel/Makefile"
 
-            KERNEL_BUILD_DIR="$(pwd -P)"
-            KERNEL_RELEASE="$(make -s LLVM=1 ARCH=x86_64 kernelrelease)"
-            if [ -z "$KERNEL_BUILD_DIR" ] || [ -z "$KERNEL_RELEASE" ]; then
-              printf "Invalid kernel build context: dir=<%s> release=<%s>\\n" "$KERNEL_BUILD_DIR" "$KERNEL_RELEASE" >&2
-              exit 1
-            fi
             printf "NVIDIA build target: kernel_dir=%s kernel_release=%s\\n" "$KERNEL_BUILD_DIR" "$KERNEL_RELEASE"
             mkdir -p "/lib/modules/$KERNEL_RELEASE"
             ln -sfn "$KERNEL_BUILD_DIR" "/lib/modules/$KERNEL_RELEASE/build"
@@ -172,7 +170,7 @@ jobs:
               printf "Driver: %s\\nKernel: %s\\n" "$NVIDIA_VERSION" "$KERNEL_RELEASE"
               printf "Compiler: %s\\n" "$(clang --version | head -n 1)"
             } > /work/build-evidence/nvidia-build-environment.txt
-            if ! make -C "$NVIDIA_SOURCE/kernel" KERNEL_UNAME="$KERNEL_RELEASE" LLVM=1 CC=clang LD=ld.lld -j2 > /work/build-evidence/nvidia-build.log 2>&1; then
+            if ! make -C "$NVIDIA_SOURCE/kernel" KERNEL_UNAME="$KERNEL_RELEASE" SYSSRC="$KERNEL_BUILD_DIR" SYSOUT="$KERNEL_BUILD_DIR" LLVM=1 CC=clang LD=ld.lld -j2 > /work/build-evidence/nvidia-build.log 2>&1; then
               cat /work/build-evidence/nvidia-build.log
               exit 1
             fi
