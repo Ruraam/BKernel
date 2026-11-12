@@ -60,6 +60,7 @@ PY
         run: |
           TOP_DIR="$(python3 -c 'import pathlib,tomllib; print(tomllib.loads(pathlib.Path("kernel-source.toml").read_text())["top_dir"])')"
           docker run --rm --volume "${{ github.workspace }}:/work" --workdir "/work/.kernel-source/$TOP_DIR" bkernel-kernel-build:ci sh -ec '
+            make LLVM=1 rustavailable
             make LLVM=1 ARCH=x86_64 x86_64_defconfig
             scripts/kconfig/merge_config.sh -m .config \
               /work/configs/x86_64/bubbleos-desktop.config \
@@ -69,11 +70,10 @@ PY
             mkdir -p /work/build-evidence
             cp .config /work/build-evidence/nvidia-pascal.config
             make LLVM=1 ARCH=x86_64 modules_prepare
-            make LLVM=1 ARCH=x86_64 -j2 M=drivers/gpu/drm/nouveau modules
-            find drivers/gpu/drm/nouveau -maxdepth 1 -type f -name "*.ko" -print
-            test -s drivers/gpu/drm/nouveau/nouveau.ko
-            cp drivers/gpu/drm/nouveau/nouveau.ko /work/build-evidence/
-            sha256sum /work/build-evidence/nvidia-pascal.config /work/build-evidence/nouveau.ko > /work/build-evidence/SHA256SUMS
+            make LLVM=1 ARCH=x86_64 -j2 drivers/gpu/drm/nouveau/nouveau.o
+            test -s drivers/gpu/drm/nouveau/nouveau.o
+            cp drivers/gpu/drm/nouveau/nouveau.o /work/build-evidence/
+            sha256sum /work/build-evidence/nvidia-pascal.config /work/build-evidence/nouveau.o > /work/build-evidence/SHA256SUMS
           '
 
       - name: Upload Nouveau build evidence
