@@ -112,8 +112,8 @@ jobs:
             --env "NVIDIA_PACKAGE=$NVIDIA_PACKAGE" \
             --env "NVIDIA_URL=$NVIDIA_URL" \
             --env "NVIDIA_SHA256=$NVIDIA_SHA256" \
+            --env "KERNEL_BUILD_DIR=/work/.kernel-source/$TOP_DIR" \
             --volume "${{ github.workspace }}:/work" --workdir "/work/.kernel-source/$TOP_DIR" bkernel-kernel-build:ci sh -ec '
-            KERNEL_BUILD_DIR="$(pwd -P)"
             test -f "$KERNEL_BUILD_DIR/Makefile"
             make LLVM=1 ARCH=x86_64 allmodconfig
             python3 /work/scripts/validate-hardware-coverage.py .config --report /work/build-evidence/hardware-coverage.txt
