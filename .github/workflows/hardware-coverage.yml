@@ -113,9 +113,10 @@ jobs:
             --env "NVIDIA_URL=$NVIDIA_URL" \
             --env "NVIDIA_SHA256=$NVIDIA_SHA256" \
             --volume "${{ github.workspace }}:/work" --workdir "/work/.kernel-source/$TOP_DIR" bkernel-kernel-build:ci sh -ec '
-            KERNEL_BUILD_DIR="$(readlink -f .)"
-            printf "Kernel source directory: <%s>\\n" "$KERNEL_BUILD_DIR"
+            KERNEL_BUILD_DIR="$(find /work/.kernel-source -mindepth 2 -maxdepth 2 -type f -name Makefile -printf '%h\\n' | head -n 1)"
             test -n "$KERNEL_BUILD_DIR"
+            KERNEL_BUILD_DIR="$(readlink -f "$KERNEL_BUILD_DIR")"
+            printf "Kernel source directory: <%s>\\n" "$KERNEL_BUILD_DIR"
             test -f "$KERNEL_BUILD_DIR/Makefile"
             make LLVM=1 ARCH=x86_64 allmodconfig
             python3 /work/scripts/validate-hardware-coverage.py .config --report /work/build-evidence/hardware-coverage.txt
@@ -148,7 +149,7 @@ jobs:
 
             # The container workdir is already the verified source tree.
             # Avoid passing a shell variable through make's -C option.
-            KERNEL_RELEASE="$(make -s LLVM=1 ARCH=x86_64 kernelrelease)"
+            KERNEL_RELEASE="$(make -s -C "$KERNEL_BUILD_DIR" LLVM=1 ARCH=x86_64 kernelrelease)"
             test -n "$KERNEL_RELEASE"
 
             # Compile NVIDIA's proprietary Pascal modules against this exact build.
