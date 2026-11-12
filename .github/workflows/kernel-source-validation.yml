@@ -36,11 +36,11 @@ jobs:
         run: |
           docker run --rm --volume "${{ github.workspace }}:/work" --workdir /work bkernel-kernel-build:ci sh -ec '
             eval "$(python3 - <<'"'"'PY'"'"'
-import pathlib, shlex, tomllib
-data = tomllib.loads(pathlib.Path("kernel-source.toml").read_text())
-for key in ("version", "url", "sha256", "archive", "top_dir"):
-    print(f"{key.upper()}={shlex.quote(str(data[key]))}")
-PY
+          import pathlib, shlex, tomllib
+          data = tomllib.loads(pathlib.Path("kernel-source.toml").read_text())
+          for key in ("version", "url", "sha256", "archive", "top_dir"):
+              print(f"{key.upper()}={shlex.quote(str(data[key]))}")
+          PY
 )"
             curl --fail --location --retry 3 --output "$ARCHIVE" "$URL"
             printf "%s  %s\n" "$SHA256" "$ARCHIVE" | sha256sum --check --strict
