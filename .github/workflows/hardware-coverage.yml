@@ -2,7 +2,7 @@ name: Hardware subsystem coverage
 
 on:
   push:
-    branches: ["main", "ci/**"]
+    branches: ["main", "ci/**", "feat/**"]
     paths:
       - "kernel-source.toml"
       - "containers/kernel-build.Dockerfile"
