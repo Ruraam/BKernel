@@ -66,11 +66,11 @@ jobs:
           PY
           )"
             curl --fail --location --retry 3 --output "$ARCHIVE" "$URL"
-            printf "%s  %s\n" "$SHA256" "$ARCHIVE" | sha256sum --check --strict
+            printf "%s  %s\\n" "$SHA256" "$ARCHIVE" | sha256sum --check --strict
             mkdir -p /work/.kernel-source
             tar -xf "$ARCHIVE" --directory /work/.kernel-source
             test -f "/work/.kernel-source/$TOP_DIR/Makefile"
-            printf "Verified Linux %s source archive\n" "$VERSION"
+            printf "Verified Linux %s source archive\\n" "$VERSION"
           '
 
       - name: Download, verify and apply pinned Zen patch
@@ -85,14 +85,14 @@ jobs:
           )"
             curl --fail --location --retry 3 --output "$PATCH" "$PATCH_URL"
             curl --fail --location --retry 3 --output "$SIGNATURE" "$SIGNATURE_URL"
-            printf "%s  %s\n" "$PATCH_SHA256" "$PATCH" | sha256sum --check --strict
-            printf "%s  %s\n" "$SIGNATURE_SHA256" "$SIGNATURE" | sha256sum --check --strict
+            printf "%s  %s\\n" "$PATCH_SHA256" "$PATCH" | sha256sum --check --strict
+            printf "%s  %s\\n" "$SIGNATURE_SHA256" "$SIGNATURE" | sha256sum --check --strict
             zstd --decompress --stdout "$PATCH" > /work/zen.patch
             test -s /work/zen.patch
             cd "/work/.kernel-source/linux-$BASE_VERSION"
             patch --dry-run --batch --forward -p1 < /work/zen.patch
             patch --batch --forward -p1 < /work/zen.patch
-            printf "Applied verified Zen patch %s\n" "$VERSION"
+            printf "Applied verified Zen patch %s\\n" "$VERSION"
           '
 
       - name: Generate allmodconfig and audit hardware subsystems
@@ -112,8 +112,10 @@ jobs:
             --env "NVIDIA_PACKAGE=$NVIDIA_PACKAGE" \
             --env "NVIDIA_URL=$NVIDIA_URL" \
             --env "NVIDIA_SHA256=$NVIDIA_SHA256" \
-            --env "KERNEL_BUILD_DIR=/work/.kernel-source/$TOP_DIR" \
             --volume "${{ github.workspace }}:/work" --workdir "/work/.kernel-source/$TOP_DIR" bkernel-kernel-build:ci sh -ec '
+            KERNEL_BUILD_DIR="$(readlink -f .)"
+            printf "Kernel source directory: <%s>\\n" "$KERNEL_BUILD_DIR"
+            test -n "$KERNEL_BUILD_DIR"
             test -f "$KERNEL_BUILD_DIR/Makefile"
             make LLVM=1 ARCH=x86_64 allmodconfig
             python3 /work/scripts/validate-hardware-coverage.py .config --report /work/build-evidence/hardware-coverage.txt
@@ -126,7 +128,7 @@ jobs:
               /work/configs/x86_64/bubbleos-desktop.config \
               /work/configs/x86_64/nvidia-pascal.config
             make LLVM=1 ARCH=x86_64 olddefconfig
-            grep -qx 'CONFIG_RUST=y' .config
+            grep -qx '"'"'CONFIG_RUST=y'"'"' .config
             python3 /work/scripts/validate-nvidia-profile.py .config
             make LLVM=1 ARCH=x86_64 modules_prepare
 
@@ -144,9 +146,9 @@ jobs:
             cp drivers/gpu/drm/nouveau/nouveau.o /work/build-evidence/
             make LLVM=1 ARCH=x86_64 modules_install INSTALL_MOD_PATH=/work/build-evidence/modules
 
-            # Pin the kernel release before vendor extraction. Use explicit -C
-            # paths below so NVIDIA's build does not depend on the current directory.
-            KERNEL_RELEASE="$(make -s -C "$KERNEL_BUILD_DIR" LLVM=1 ARCH=x86_64 kernelrelease)"
+            # The container workdir is already the verified source tree.
+            # Avoid passing a shell variable through make's -C option.
+            KERNEL_RELEASE="$(make -s LLVM=1 ARCH=x86_64 kernelrelease)"
             test -n "$KERNEL_RELEASE"
 
             # Compile NVIDIA's proprietary Pascal modules against this exact build.
@@ -176,10 +178,10 @@ jobs:
             fi
             cat /work/build-evidence/nvidia-build.log
 
-            find "$NVIDIA_SOURCE/kernel" -maxdepth 1 -type f -name '*.ko' -printf '%f\\n' | sort > /work/build-evidence/nvidia-modules.txt
-            grep -qx 'nvidia.ko' /work/build-evidence/nvidia-modules.txt
-            grep -qx 'nvidia-modeset.ko' /work/build-evidence/nvidia-modules.txt
-            grep -qx 'nvidia-drm.ko' /work/build-evidence/nvidia-modules.txt
+            find "$NVIDIA_SOURCE/kernel" -maxdepth 1 -type f -name '"'"'*.ko'"'"' -printf '"'"'%f\\n'"'"' | sort > /work/build-evidence/nvidia-modules.txt
+            grep -qx '"'"'nvidia.ko'"'"' /work/build-evidence/nvidia-modules.txt
+            grep -qx '"'"'nvidia-modeset.ko'"'"' /work/build-evidence/nvidia-modules.txt
+            grep -qx '"'"'nvidia-drm.ko'"'"' /work/build-evidence/nvidia-modules.txt
             sha256sum "$NVIDIA_SOURCE"/kernel/*.ko > /work/build-evidence/nvidia-modules.SHA256SUMS
             rm -rf "$NVIDIA_WORK"
             sha256sum /work/build-evidence/nvidia-pascal.config /work/build-evidence/bzImage /work/build-evidence/vmlinux /work/build-evidence/System.map /work/build-evidence/nouveau.o > /work/build-evidence/kernel.SHA256SUMS
