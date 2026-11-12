@@ -7,7 +7,6 @@ use std::process::{Command, ExitCode};
 
 const VERSION: &str = env!("CARGO_PKG_VERSION");
 
-
 #[derive(Debug, PartialEq, Eq)]
 struct SourcePin {
     version: String,
@@ -116,10 +115,16 @@ fn fetch_source(cache_dir: &Path, pin: &SourcePin) -> Result<(), String> {
     let archive_path = cache_dir.join(&pin.archive);
     if archive_path.exists() {
         match verify_archive(&archive_path, &pin.sha256) {
-            Ok(()) => println!("Using already verified Linux {} source archive", pin.version),
+            Ok(()) => println!(
+                "Using already verified Linux {} source archive",
+                pin.version
+            ),
             Err(_) => {
                 fs::remove_file(&archive_path).map_err(|error| {
-                    format!("cannot remove invalid archive {}: {error}", archive_path.display())
+                    format!(
+                        "cannot remove invalid archive {}: {error}",
+                        archive_path.display()
+                    )
                 })?;
             }
         }
@@ -129,11 +134,17 @@ fn fetch_source(cache_dir: &Path, pin: &SourcePin) -> Result<(), String> {
         let temporary_path = cache_dir.join(format!("{}.part", pin.archive));
         if temporary_path.exists() {
             fs::remove_file(&temporary_path).map_err(|error| {
-                format!("cannot remove stale download {}: {error}", temporary_path.display())
+                format!(
+                    "cannot remove stale download {}: {error}",
+                    temporary_path.display()
+                )
             })?;
         }
 
-        println!("Downloading Linux {} from the pinned HTTPS URL", pin.version);
+        println!(
+            "Downloading Linux {} from the pinned HTTPS URL",
+            pin.version
+        );
         let status = Command::new("curl")
             .args([
                 "--fail",
@@ -194,7 +205,11 @@ fn fetch_source(cache_dir: &Path, pin: &SourcePin) -> Result<(), String> {
         ));
     }
 
-    println!("Verified Linux {} source extracted to {}", pin.version, source_dir.display());
+    println!(
+        "Verified Linux {} source extracted to {}",
+        pin.version,
+        source_dir.display()
+    );
     Ok(())
 }
 
@@ -213,8 +228,9 @@ fn run() -> Result<(), String> {
             let operation = args.next().ok_or_else(|| {
                 "missing source operation; use 'source verify' or 'source fetch'".to_owned()
             })?;
-            let manifest_path = Path::new(env!("CARGO_MANIFEST_DIR")).join("../../kernel-source.toml");
-            let pin = load_source_pin(manifest_path)?;
+            let manifest_path =
+                Path::new(env!("CARGO_MANIFEST_DIR")).join("../../kernel-source.toml");
+            let pin = load_source_pin(&manifest_path)?;
 
             match operation.as_str() {
                 "verify" => {
@@ -284,7 +300,8 @@ mod tests {
             sha256: "b11b6df8295e8e991ff040b71aaa4994a8b55caa23b6b092907f195b5840fd1f".to_owned(),
             top_dir: "linux-7.3.4".to_owned(),
         };
-        let path = std::env::temp_dir().join(format!("bkernel-manifest-test-{}", std::process::id()));
+        let path =
+            std::env::temp_dir().join(format!("bkernel-manifest-test-{}", std::process::id()));
         std::fs::write(&path, manifest).expect("write temporary test manifest");
         assert_eq!(load_source_pin(&path).expect("valid source pin"), pin);
         std::fs::remove_file(path).expect("remove temporary test manifest");
