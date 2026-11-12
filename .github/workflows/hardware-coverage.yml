@@ -8,6 +8,8 @@ on:
       - "containers/kernel-build.Dockerfile"
       - "scripts/validate-hardware-coverage.py"
       - "scripts/validate-nvidia-profile.py"
+      - "scripts/validate-nvidia-lock.py"
+      - "drivers/nvidia/version.lock"
       - "configs/x86_64/bubbleos-desktop.config"
       - "configs/x86_64/nvidia-pascal.config"
       - ".github/workflows/hardware-coverage.yml"
@@ -37,6 +39,9 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+
+      - name: Validate pinned NVIDIA driver metadata
+        run: python3 scripts/validate-nvidia-lock.py
 
       - name: Build pinned kernel toolchain
         run: docker build --platform linux/amd64 --pull --file containers/kernel-build.Dockerfile --tag bkernel-kernel-build:ci .
