@@ -234,9 +234,10 @@ fn run() -> Result<(), String> {
 
             match operation.as_str() {
                 "verify" => {
-                    let archive = args
-                        .next()
-                        .map_or_else(|| PathBuf::from("target/sources").join(&pin.archive), PathBuf::from);
+                    let archive = args.next().map_or_else(
+                        || PathBuf::from("target/sources").join(&pin.archive),
+                        PathBuf::from,
+                    );
                     verify_archive(&archive, &pin.sha256)?;
                 }
                 "fetch" => {
