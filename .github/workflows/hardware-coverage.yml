@@ -159,8 +159,11 @@ PY
               printf "Driver: %s\\nKernel: %s\\n" "$NVIDIA_VERSION" "$KERNEL_RELEASE"
               printf "Compiler: %s\\n" "$(clang --version | head -n 1)"
             } > /work/build-evidence/nvidia-build-environment.txt
-            set -o pipefail
-            make -C "$NVIDIA_SOURCE/kernel" KERNEL_UNAME="$KERNEL_RELEASE" LLVM=1 CC=clang LD=ld.lld -j2 2>&1 | tee /work/build-evidence/nvidia-build.log
+            if ! make -C "$NVIDIA_SOURCE/kernel" KERNEL_UNAME="$KERNEL_RELEASE" LLVM=1 CC=clang LD=ld.lld -j2 > /work/build-evidence/nvidia-build.log 2>&1; then
+              cat /work/build-evidence/nvidia-build.log
+              exit 1
+            fi
+            cat /work/build-evidence/nvidia-build.log
 
             find "$NVIDIA_SOURCE/kernel" -maxdepth 1 -type f -name '*.ko' -printf '%f\\n' | sort > /work/build-evidence/nvidia-modules.txt
             grep -qx 'nvidia.ko' /work/build-evidence/nvidia-modules.txt
