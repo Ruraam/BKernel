@@ -41,6 +41,11 @@ jobs:
             test "$SOURCE_DATE_EPOCH" = 1794335460
             test "$KBUILD_BUILD_USER" = bkernel
             test "$KBUILD_BUILD_HOST" = reproducible
+            test "$KBUILD_BUILD_TIMESTAMP" = "Tue Nov 10 18:31:00 UTC 2026"
+            test -d "$RUST_LIB_SRC"
+            bindgen --version
+            rustfmt --version
+            clippy-driver --version
             gcc --version
             clang --version
             make --version
@@ -50,3 +55,11 @@ jobs:
           ' | tee kernel-build-packages.txt
           test -s kernel-build-packages.txt
           sha256sum kernel-build-packages.txt
+
+      - name: Upload package inventory
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        with:
+          name: bkernel-build-packages
+          path: kernel-build-packages.txt
+          if-no-files-found: error
+          retention-days: 90
