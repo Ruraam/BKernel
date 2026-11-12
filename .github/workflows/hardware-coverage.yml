@@ -41,7 +41,7 @@ jobs:
   coverage:
     name: Validate x86_64 driver subsystem configuration
     runs-on: ubuntu-24.04
-    timeout-minutes: 45
+    timeout-minutes: 120
     steps:
       - name: Checkout
         uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
@@ -112,13 +112,24 @@ PY
               /work/configs/x86_64/bubbleos-desktop.config \
               /work/configs/x86_64/nvidia-pascal.config
             make LLVM=1 ARCH=x86_64 olddefconfig
+            grep -qx 'CONFIG_RUST=y' .config
             python3 /work/scripts/validate-nvidia-profile.py .config
             make LLVM=1 ARCH=x86_64 modules_prepare
-            make LLVM=1 ARCH=x86_64 -j2 drivers/gpu/drm/nouveau/nouveau.o
+
+            # Compile the complete kernel image and all configured modules.
+            make LLVM=1 ARCH=x86_64 -j2 bzImage modules
+            test -s arch/x86/boot/bzImage
+            test -s vmlinux
+
+            # Preserve the Nouveau object as explicit fallback-driver evidence.
             test -s drivers/gpu/drm/nouveau/nouveau.o
             cp .config /work/build-evidence/nvidia-pascal.config
+            cp arch/x86/boot/bzImage /work/build-evidence/bzImage
+            cp vmlinux /work/build-evidence/vmlinux
+            cp System.map /work/build-evidence/System.map
             cp drivers/gpu/drm/nouveau/nouveau.o /work/build-evidence/
-            sha256sum /work/build-evidence/nvidia-pascal.config /work/build-evidence/nouveau.o > /work/build-evidence/nvidia-pascal.SHA256SUMS
+            make LLVM=1 ARCH=x86_64 modules_install INSTALL_MOD_PATH=/work/build-evidence/modules
+            sha256sum /work/build-evidence/nvidia-pascal.config /work/build-evidence/bzImage /work/build-evidence/vmlinux /work/build-evidence/System.map /work/build-evidence/nouveau.o > /work/build-evidence/kernel.SHA256SUMS
           '
 
       - name: Upload hardware coverage evidence
