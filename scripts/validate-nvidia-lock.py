@@ -27,6 +27,8 @@ EXPECTED = {
     "variant": "full",
     "url": "https://download.nvidia.com/XFree86/Linux-x86_64/580.76.05/NVIDIA-Linux-x86_64-580.76.05.run",
     "sha256_source": "https://download.nvidia.com/XFree86/Linux-x86_64/580.76.05/NVIDIA-Linux-x86_64-580.76.05.run.sha256sum",
+    "sha256": "219be636b60931b021b2e8c1e0eff887363c731f8a940caa87bcc054d05d97fd",
+    "release_date": "2025-08-12",
 }
 HEX_SHA256 = re.compile(r"^[0-9a-f]{64}$")
 
