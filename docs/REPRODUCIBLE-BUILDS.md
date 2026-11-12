@@ -11,7 +11,7 @@ The root `kernel-source.toml` is the authoritative upstream source pin. It recor
 - expected extracted top-level directory;
 - fixed source-date epoch.
 
-The initial baseline is Linux 6.18.63 LTS. Its SHA-256 is taken from the kernel.org v6.x signed checksum manifest. Before changing the pin, verify the checksum manifest's OpenPGP signature against a trusted kernel maintainer key, record the verification evidence, and review the new archive digest.
+The initial baseline is Linux 7.3.4 stable. Its SHA-256 is taken from the kernel.org v7.x signed checksum manifest. Before changing the pin, verify the checksum manifest's OpenPGP signature against a trusted kernel maintainer key, record the verification evidence, and review the new archive digest.
 
 Never build from a moving branch, an unversioned URL, or an archive whose digest is absent.
 
