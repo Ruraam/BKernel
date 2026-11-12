@@ -9,7 +9,8 @@ ENV DEBIAN_FRONTEND=noninteractive \
     SOURCE_DATE_EPOCH=1794335460 \
     KBUILD_BUILD_USER=bkernel \
     KBUILD_BUILD_HOST=reproducible \
-    KBUILD_BUILD_VERSION=1 \\\n    KBUILD_BUILD_TIMESTAMP="Tue Nov 10 18:31:00 UTC 2026"
+    KBUILD_BUILD_VERSION=1
+ENV KBUILD_BUILD_TIMESTAMP="Tue Nov 10 18:31:00 UTC 2026"
 
 RUN rm -f /etc/apt/sources.list /etc/apt/sources.list.d/debian.sources \
     && printf 'deb [check-valid-until=no] http://snapshot.debian.org/archive/debian/%s trixie main\n' "${DEBIAN_SNAPSHOT}" > /etc/apt/sources.list \
