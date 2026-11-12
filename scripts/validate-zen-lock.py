@@ -25,7 +25,7 @@ EXPECTED = {
     "signature_url": "https://github.com/zen-kernel/zen-kernel/releases/download/v7.3.4-zen2/linux-v7.3.4-zen2.patch.zst.sig",
     "signature_sha256": "fc35f59330bf64297c5cf21a38d077203e15074b20fb8f51bbb660a4e0067844",
     "signature_verification": "pinned-only; trusted maintainer key not yet configured",
-    "source_date_epoch": 1794420622,
+    "source_date_epoch": 1794335460,
 }
 
 
