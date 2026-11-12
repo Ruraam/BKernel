@@ -11,6 +11,6 @@ packages = [
   "bc", "bison", "build-essential", "ca-certificates", "clang", "cpio",
   "curl", "dwarves", "flex", "git", "kmod", "libelf-dev", "libncurses-dev",
   "libssl-dev", "libudev-dev", "libclang-dev", "lld", "llvm", "make",
-  "openssl", "pahole", "perl", "python3", "rsync", "rustc", "cargo",
+  "openssl", "perl", "python3", "rsync", "rustc", "cargo",
   "xz-utils", "zstd"
 ]
