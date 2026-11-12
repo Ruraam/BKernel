@@ -10,8 +10,10 @@ the driver path for Pascal.
 
 References:
 
-- NVIDIA Linux 580.173.02 release page:
-  https://www.nvidia.com/en-us/geforce/drivers/details/273160/
+- NVIDIA Linux 580.76.05 official release page:
+  https://www.nvidia.com/en-us/drivers/details/252613/
+- Official NVIDIA archive and SHA-256:
+  https://download.nvidia.com/XFree86/Linux-x86_64/580.76.05/
 - NVIDIA Pascal GPU support list:
   https://nvidia.custhelp.com/app/answers/detail/a_id/5678/kw/updating
 - NVIDIA open GPU kernel modules:
@@ -53,11 +55,21 @@ does not claim that the proprietary NVIDIA module has been built or tested.
 
 ## Proprietary driver validation
 
-Use an NVIDIA-published 580-series Linux x86_64 driver package. Before adding
-a version to a release lock:
+The initial pinned target is **580.76.05** (released 2025-08-12). It is
+explicitly listed by NVIDIA for the GeForce GTX 1050 Ti. The full installer
+is selected rather than the `no-compat32` variant so 32-bit userspace
+compatibility can be evaluated for Steam/Proton workloads.
 
-- record the exact upstream version and official download URL;
-- obtain and independently verify the vendor-published SHA-256 digest;
+The immutable metadata is recorded in `drivers/nvidia/version.lock`. The
+official vendor SHA-256 sidecar reports:
+
+```text
+219be636b60931b021b2e8c1e0eff887363c731f8a940caa87bcc054d05d97fd  NVIDIA-Linux-x86_64-580.76.05.run
+```
+
+Before building or packaging this version:
+
+- verify the downloaded installer against the pinned vendor SHA-256;
 - record the applicable NVIDIA license and redistribution restrictions;
 - extract/build the kernel module in an isolated build job;
 - retain the build log and module metadata as CI evidence.
