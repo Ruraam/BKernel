@@ -175,10 +175,9 @@ jobs:
             fi
             printf "NVIDIA kernel Makefile found.\\n"
 
-            # Keep the release captured immediately after modules_install.
-            # The NVIDIA self-extractor must not trigger a second, unnecessary
-            # lookup of the already-verified modules_install output.
-            KERNEL_BUILD_DIR="$(pwd -P)"
+            # Keep the canonical source path resolved and validated before
+            # compilation. Do not replace it with pwd: the current directory
+            # may no longer resolve to the mounted source tree after extraction.
             if [ -z "$KERNEL_BUILD_DIR" ] || [ ! -f "$KERNEL_BUILD_DIR/Makefile" ]; then
               printf "ERROR: kernel source path invalid: <%s> (TOP_DIR=<%s>)\\n" "$KERNEL_BUILD_DIR" "$TOP_DIR"
               ls -ld "/work/.kernel-source" "/work/.kernel-source/$TOP_DIR" 2>&1 || true
