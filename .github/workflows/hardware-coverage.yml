@@ -149,7 +149,7 @@ jobs:
 
             # The container workdir is already the verified source tree.
             # Avoid passing a shell variable through make's -C option.
-            KERNEL_RELEASE="$(make -s -C "$KERNEL_BUILD_DIR" LLVM=1 ARCH=x86_64 kernelrelease)"
+            KERNEL_RELEASE="$(make -s LLVM=1 ARCH=x86_64 kernelrelease)"
             test "$KERNEL_RELEASE" = "7.3.4-zen2"
             printf "Verified kernel release: <%s>\\n" "$KERNEL_RELEASE"
 
