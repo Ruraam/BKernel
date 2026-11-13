@@ -169,7 +169,19 @@ jobs:
             NVIDIA_SOURCE="$NVIDIA_WORK/NVIDIA-Linux-x86_64-$NVIDIA_VERSION"
             test -f "$NVIDIA_SOURCE/kernel/Makefile"
 
-            printf "NVIDIA build target: kernel_dir=%s kernel_release=%s\\n" "$KERNEL_BUILD_DIR" "$KERNEL_RELEASE"
+            # Re-resolve both values from the verified on-disk build outputs.
+            # This keeps the NVIDIA hand-off independent from shell state left by
+            # the vendor's self-extracting installer.
+            KERNEL_BUILD_DIR="$(readlink -f "/work/.kernel-source/$TOP_DIR")"
+            set -- /work/build-evidence/modules/lib/modules/*
+            test "$#" -eq 1
+            test -d "$1"
+            KERNEL_RELEASE="${1##*/}"
+            test -f "$KERNEL_BUILD_DIR/Makefile"
+            test "$KERNEL_RELEASE" = "7.3.4-zen2"
+            test -n "$KERNEL_BUILD_DIR"
+            test -n "$KERNEL_RELEASE"
+            printf "NVIDIA build target: kernel_dir=<%s> kernel_release=<%s>\\n" "$KERNEL_BUILD_DIR" "$KERNEL_RELEASE"
             mkdir -p "/lib/modules/$KERNEL_RELEASE"
             ln -sfn "$KERNEL_BUILD_DIR" "/lib/modules/$KERNEL_RELEASE/build"
             ln -sfn "$KERNEL_BUILD_DIR" "/lib/modules/$KERNEL_RELEASE/source"
