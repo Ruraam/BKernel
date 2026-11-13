@@ -196,7 +196,30 @@ jobs:
             PATCH_WORK=/tmp/bkernel-nvidia-patches
             PATCH_MANIFEST=/work/build-evidence/nvidia-patches.manifest
             mkdir -p "$PATCH_WORK"
-            test -s "$PATCH_MANIFEST"
+            printf "NVIDIA patch manifest diagnostics:\\n"
+            printf "  manifest path: <%s>\\n" "$PATCH_MANIFEST"
+            printf "  build-evidence mount: "
+            if [ -d /work/build-evidence ]; then
+              printf "present\\n"
+              ls -ld /work/build-evidence
+            else
+              printf "MISSING\\n"
+            fi
+            if [ -e "$PATCH_MANIFEST" ]; then
+              ls -l "$PATCH_MANIFEST"
+              printf "  manifest bytes: "
+              wc -c < "$PATCH_MANIFEST"
+              printf "  manifest contents:\\n"
+              cat "$PATCH_MANIFEST"
+            else
+              printf "ERROR: patch manifest does not exist inside the container.\\n"
+              find /work -maxdepth 3 -type f -name '*manifest*' -print 2>&1 || true
+              exit 1
+            fi
+            if [ ! -s "$PATCH_MANIFEST" ]; then
+              printf "ERROR: patch manifest exists but is empty.\\n"
+              exit 1
+            fi
             while read -r patch_repository patch_commit patch_target patch_name patch_path patch_blob_sha1; do
               patch_file="$PATCH_WORK/$patch_name.patch"
               patch_url="https://raw.githubusercontent.com/$patch_repository/$patch_commit/$patch_path"
