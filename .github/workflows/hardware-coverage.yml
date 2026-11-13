@@ -175,18 +175,10 @@ jobs:
             fi
             printf "NVIDIA kernel Makefile found.\\n"
 
-            # Re-resolve both values from the verified on-disk build outputs.
-            # This keeps the NVIDIA hand-off independent from shell state left by
-            # the vendor's self-extracting installer.
+            # Keep the release captured immediately after modules_install.
+            # The NVIDIA self-extractor must not trigger a second, unnecessary
+            # lookup of the already-verified modules_install output.
             KERNEL_BUILD_DIR="$(pwd -P)"
-            set -- /work/build-evidence/modules/lib/modules/*
-            if [ "$#" -ne 1 ] || [ ! -d "$1" ]; then
-              printf "ERROR: expected one installed module release directory. TOP_DIR=<%s>\\n" "$TOP_DIR"
-              printf "Installed module directories:\\n"
-              find /work/build-evidence/modules/lib/modules -mindepth 1 -maxdepth 1 -print 2>/dev/null || true
-              exit 1
-            fi
-            KERNEL_RELEASE="${1##*/}"
             if [ -z "$KERNEL_BUILD_DIR" ] || [ ! -f "$KERNEL_BUILD_DIR/Makefile" ]; then
               printf "ERROR: kernel source path invalid: <%s> (TOP_DIR=<%s>)\\n" "$KERNEL_BUILD_DIR" "$TOP_DIR"
               ls -ld "/work/.kernel-source" "/work/.kernel-source/$TOP_DIR" 2>&1 || true
