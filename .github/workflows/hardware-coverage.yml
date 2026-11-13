@@ -207,7 +207,7 @@ jobs:
               patch --dry-run --batch --forward -Np1 -d "$NVIDIA_SOURCE/$patch_target" < "$PATCH_WORK/$patch_name.patch"
             done < "$PATCH_WORK/manifest"
             while read -r patch_repository patch_commit patch_target patch_name patch_path patch_blob_sha1; do
-              patch --batch --forward -Np1 -d "$NVIDIA_SOURCE/kernel" < "$PATCH_WORK/$patch_name.patch"
+              patch --batch --forward -Np1 -d "$NVIDIA_SOURCE/$patch_target" < "$PATCH_WORK/$patch_name.patch"
               printf "Applied CachyOS patch: %s\\n" "$patch_name"
             done < "$PATCH_WORK/manifest"
 
