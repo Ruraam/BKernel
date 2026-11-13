@@ -178,7 +178,7 @@ jobs:
             # Re-resolve both values from the verified on-disk build outputs.
             # This keeps the NVIDIA hand-off independent from shell state left by
             # the vendor's self-extracting installer.
-            KERNEL_BUILD_DIR="$(readlink -f "/work/.kernel-source/$TOP_DIR")"
+            KERNEL_BUILD_DIR="$(pwd -P)"
             set -- /work/build-evidence/modules/lib/modules/*
             if [ "$#" -ne 1 ] || [ ! -d "$1" ]; then
               printf "ERROR: expected one installed module release directory. TOP_DIR=<%s>\\n" "$TOP_DIR"
