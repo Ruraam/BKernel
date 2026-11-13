@@ -11,6 +11,8 @@ on:
       - "scripts/validate-hardware-coverage.py"
       - "scripts/validate-nvidia-profile.py"
       - "scripts/validate-nvidia-lock.py"
+      - "scripts/validate-nvidia-patches.py"
+      - "drivers/nvidia/patches.lock"
       - "drivers/nvidia/version.lock"
       - "configs/x86_64/bubbleos-desktop.config"
       - "configs/x86_64/nvidia-pascal.config"
@@ -24,6 +26,8 @@ on:
       - "scripts/validate-hardware-coverage.py"
       - "scripts/validate-nvidia-profile.py"
       - "scripts/validate-nvidia-lock.py"
+      - "scripts/validate-nvidia-patches.py"
+      - "drivers/nvidia/patches.lock"
       - "drivers/nvidia/version.lock"
       - "configs/x86_64/bubbleos-desktop.config"
       - "configs/x86_64/nvidia-pascal.config"
@@ -48,6 +52,9 @@ jobs:
 
       - name: Validate pinned NVIDIA driver metadata
         run: python3 scripts/validate-nvidia-lock.py
+
+      - name: Validate pinned CachyOS NVIDIA patches
+        run: python3 scripts/validate-nvidia-patches.py
 
       - name: Validate pinned Zen Kernel release metadata
         run: python3 scripts/validate-zen-lock.py
@@ -174,6 +181,35 @@ jobs:
               exit 1
             fi
             printf "NVIDIA kernel Makefile found.\\n"
+ 
+            # Apply the reviewed CachyOS Pascal/580 patches to the extracted
+            # proprietary driver, never to the Linux kernel source tree.
+            PATCH_WORK=/tmp/bkernel-nvidia-patches
+            mkdir -p "$PATCH_WORK"
+            python3 - <<'PY' > "$PATCH_WORK/manifest"
+          import pathlib, tomllib
+          data = tomllib.loads(pathlib.Path("/work/drivers/nvidia/patches.lock").read_text())
+          for patch in data["patches"]:
+              print(patch["name"], patch["path"], patch["blob_sha1"])
+          PY
+            while read -r patch_name patch_path patch_blob_sha1; do
+              patch_file="$PATCH_WORK/$patch_name.patch"
+              patch_url="https://raw.githubusercontent.com/CachyOS/kernel-patches/21d721415790e6717b2ece16e82e08eb98d16c00/$patch_path"
+              curl --fail --location --retry 3 --output "$patch_file" "$patch_url"
+              actual_blob_sha1="$(git hash-object "$patch_file")"
+              if [ "$actual_blob_sha1" != "$patch_blob_sha1" ]; then
+                printf "ERROR: CachyOS patch blob mismatch for %s: expected <%s>, got <%s>\\n" "$patch_name" "$patch_blob_sha1" "$actual_blob_sha1"
+                exit 1
+              fi
+              printf "Verified CachyOS patch: %s (%s)\\n" "$patch_name" "$actual_blob_sha1"
+            done < "$PATCH_WORK/manifest"
+            while read -r patch_name patch_path patch_blob_sha1; do
+              patch --dry-run --batch --forward -Np1 -d "$NVIDIA_SOURCE/kernel" < "$PATCH_WORK/$patch_name.patch"
+            done < "$PATCH_WORK/manifest"
+            while read -r patch_name patch_path patch_blob_sha1; do
+              patch --batch --forward -Np1 -d "$NVIDIA_SOURCE/kernel" < "$PATCH_WORK/$patch_name.patch"
+              printf "Applied CachyOS patch: %s\\n" "$patch_name"
+            done < "$PATCH_WORK/manifest"
 
             # Keep the canonical source path resolved and validated before
             # compilation. Do not replace it with pwd: the current directory
