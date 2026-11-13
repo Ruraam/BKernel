@@ -167,20 +167,38 @@ jobs:
               sh "./$NVIDIA_PACKAGE" --extract-only
             )
             NVIDIA_SOURCE="$NVIDIA_WORK/NVIDIA-Linux-x86_64-$NVIDIA_VERSION"
-            test -f "$NVIDIA_SOURCE/kernel/Makefile"
+            printf "NVIDIA extraction directory: <%s>\\n" "$NVIDIA_SOURCE"
+            if [ ! -f "$NVIDIA_SOURCE/kernel/Makefile" ]; then
+              printf "ERROR: NVIDIA kernel Makefile missing. Extracted directory contents:\\n"
+              find "$NVIDIA_WORK" -maxdepth 3 -type f -name Makefile -print | head -50
+              exit 1
+            fi
+            printf "NVIDIA kernel Makefile found.\\n"
 
             # Re-resolve both values from the verified on-disk build outputs.
             # This keeps the NVIDIA hand-off independent from shell state left by
             # the vendor's self-extracting installer.
             KERNEL_BUILD_DIR="$(readlink -f "/work/.kernel-source/$TOP_DIR")"
             set -- /work/build-evidence/modules/lib/modules/*
-            test "$#" -eq 1
-            test -d "$1"
+            if [ "$#" -ne 1 ] || [ ! -d "$1" ]; then
+              printf "ERROR: expected one installed module release directory. TOP_DIR=<%s>\\n" "$TOP_DIR"
+              printf "Installed module directories:\\n"
+              find /work/build-evidence/modules/lib/modules -mindepth 1 -maxdepth 1 -print 2>/dev/null || true
+              exit 1
+            fi
             KERNEL_RELEASE="${1##*/}"
-            test -f "$KERNEL_BUILD_DIR/Makefile"
-            test "$KERNEL_RELEASE" = "7.3.4-zen2"
+            if [ -z "$KERNEL_BUILD_DIR" ] || [ ! -f "$KERNEL_BUILD_DIR/Makefile" ]; then
+              printf "ERROR: kernel source path invalid: <%s> (TOP_DIR=<%s>)\\n" "$KERNEL_BUILD_DIR" "$TOP_DIR"
+              ls -ld "/work/.kernel-source" "/work/.kernel-source/$TOP_DIR" 2>&1 || true
+              exit 1
+            fi
+            if [ "$KERNEL_RELEASE" != "7.3.4-zen2" ]; then
+              printf "ERROR: unexpected installed kernel release: <%s>\\n" "$KERNEL_RELEASE"
+              exit 1
+            fi
             test -n "$KERNEL_BUILD_DIR"
             test -n "$KERNEL_RELEASE"
+            printf "Verified NVIDIA build inputs: source=<%s> release=<%s>\\n" "$KERNEL_BUILD_DIR" "$KERNEL_RELEASE"
             printf "NVIDIA build target: kernel_dir=<%s> kernel_release=<%s>\\n" "$KERNEL_BUILD_DIR" "$KERNEL_RELEASE"
             mkdir -p "/lib/modules/$KERNEL_RELEASE"
             ln -sfn "$KERNEL_BUILD_DIR" "/lib/modules/$KERNEL_RELEASE/build"
