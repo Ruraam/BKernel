@@ -23,6 +23,7 @@ REQUIRED = {
     "DWARF symbol versioning": ("CONFIG_GENDWARFKSYMS", {"y"}),
     "DWARF5 debug info": ("CONFIG_DEBUG_INFO_DWARF5", {"y"}),
     "LTO compatibility mode": ("CONFIG_LTO_NONE", {"y"}),
+    "PREEMPT_RT disabled for NVIDIA 580": ("CONFIG_PREEMPT_RT", {"n"}),
 }
 
 CONFIG_LINE = re.compile(r"^(CONFIG_[A-Z0-9_]+)=(.*)$")
