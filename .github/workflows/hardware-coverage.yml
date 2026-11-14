@@ -139,7 +139,7 @@ jobs:
             --env "NVIDIA_URL=$NVIDIA_URL" \
             --env "NVIDIA_SHA256=$NVIDIA_SHA256" \
             --env "TOP_DIR=$TOP_DIR" \
-            --mount "type=bind,source=${{ github.workspace }},target=/bkernel" --workdir "/bkernel/.kernel-source/$TOP_DIR" bkernel-kernel-build:ci sh -ec '
+            --mount "type=bind,source=${{ github.workspace }},target=/bkernel" --workdir "/bkernel/.kernel-source/$TOP_DIR" bkernel-kernel-build:ci sh -exs <<'BKERNEL_CONTAINER_SCRIPT'
             dump_mount_state() {
               label="$1"
               printf "\n===== BKernel mount diagnostic: %s =====\n" "$label"
@@ -170,7 +170,7 @@ jobs:
               ls -lah /bkernel/build-evidence 2>&1 | head -150 || true
               printf "============================================\n"
             }
-            trap "rc=\$?; dump_mount_state \"container exit status=\$rc\"; exit \$rc" EXIT
+            trap 'rc=$?; dump_mount_state "container exit status=$rc"; exit "$rc"' EXIT
             dump_mount_state "container start"
             KERNEL_BUILD_DIR="/bkernel/.kernel-source/$TOP_DIR"
             KERNEL_BUILD_DIR="$(readlink -f "$KERNEL_BUILD_DIR")"
@@ -321,7 +321,7 @@ jobs:
             sha256sum "$NVIDIA_SOURCE"/kernel/*.ko > /bkernel/build-evidence/nvidia-modules.SHA256SUMS
             rm -rf "$NVIDIA_WORK"
             sha256sum /bkernel/build-evidence/nvidia-pascal.config /bkernel/build-evidence/bzImage /bkernel/build-evidence/vmlinux /bkernel/build-evidence/System.map /bkernel/build-evidence/nouveau.o > /bkernel/build-evidence/kernel.SHA256SUMS
-          '
+          BKERNEL_CONTAINER_SCRIPT
 
       - name: Upload hardware coverage evidence
         uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
