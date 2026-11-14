@@ -181,7 +181,7 @@ set -eu
           grep -qx 'nvidia-drm.ko' /bkernel/build-evidence/nvidia-modules.txt
 
           # Record the exact kernel ABI and verify every required module's vermagic.
-          printf '%s\\n' "$KERNEL_RELEASE" > /bkernel/build-evidence/kernelrelease
+          printf '%s\n' "$KERNEL_RELEASE" > /bkernel/build-evidence/kernelrelease
           for module in nvidia.ko nvidia-modeset.ko nvidia-uvm.ko nvidia-drm.ko; do
             vermagic="$(modinfo -F vermagic "$NVIDIA_SOURCE/kernel/$module")"
             case "$vermagic" in
