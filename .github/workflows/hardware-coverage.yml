@@ -64,7 +64,7 @@ jobs:
 
       - name: Download, verify and extract pinned Linux source
         run: |
-          docker run --rm --volume "${{ github.workspace }}:/work" --workdir /work bkernel-kernel-build:ci sh -ec '
+          docker run --rm --volume "${{ github.workspace }}:/work" --workdir /work bkernel-kernel-build:ci sh -xec '
             eval "$(python3 - <<'"'"'PY'"'"'
           import pathlib, shlex, tomllib
           data = tomllib.loads(pathlib.Path("kernel-source.toml").read_text())
@@ -114,6 +114,16 @@ jobs:
               print(data["source_repository"], data["source_commit"], data["target_subdirectory"], patch["name"], patch["path"], patch["blob_sha1"])
           PY
           test -s build-evidence/nvidia-patches.manifest
+          printf "\\n===== RUNNER workspace diagnostics =====\\n"
+          printf "GITHUB_WORKSPACE=<%s>\\n" "$GITHUB_WORKSPACE"
+          printf "runner cwd: "; pwd -P
+          stat -c "%d:%i %A %U:%G %s bytes %n" "$GITHUB_WORKSPACE" "$GITHUB_WORKSPACE/build-evidence" "$GITHUB_WORKSPACE/build-evidence/nvidia-patches.manifest"
+          printf "runner mount: "; findmnt -T "$GITHUB_WORKSPACE" 2>&1 || true
+          printf "runner filesystem: "; df -hT "$GITHUB_WORKSPACE" 2>&1 || true
+          printf "runner inodes: "; df -i "$GITHUB_WORKSPACE" 2>&1 || true
+          printf "runner manifest SHA256: "; sha256sum build-evidence/nvidia-patches.manifest
+          printf "runner manifest contents:\\n"; cat build-evidence/nvidia-patches.manifest
+          printf "===== END RUNNER diagnostics =====\\n"
           TOP_DIR="$(python3 -c 'import pathlib,tomllib; print(tomllib.loads(pathlib.Path("kernel-source.toml").read_text())["top_dir"])')"
           eval "$(python3 - <<'PY'
           import pathlib, shlex, tomllib
@@ -138,17 +148,29 @@ jobs:
               printf "workspace: "; stat -c "%d:%i %n" /bkernel 2>&1 || true
               printf "evidence: "; stat -c "%d:%i %n" /bkernel/build-evidence 2>&1 || true
               printf "manifest: "; stat -c "%d:%i %s bytes %n" /bkernel/build-evidence/nvidia-patches.manifest 2>&1 || true
-              printf "mountinfo entries:\n"
-              grep -E " /bkernel( |/)" /proc/self/mountinfo 2>&1 || true
+              printf "mountinfo entries (complete):\n"
+              cat /proc/self/mountinfo 2>&1 || true
+              printf "proc mounts for workspace/temp:\n"
+              grep -E " /bkernel( |/)| /tmp( |/)" /proc/mounts 2>&1 || true
+              printf "filesystem capacity:\n"
+              df -hT / /bkernel /tmp 2>&1 || true
+              printf "inode capacity:\n"
+              df -i / /bkernel /tmp 2>&1 || true
+              printf "relevant environment:\n"
+              env | sort | grep -E "^(HOME|PWD|OLDPWD|TOP_DIR|NVIDIA_|PATH|TMPDIR)=" || true
               if command -v findmnt >/dev/null 2>&1; then
                 findmnt -T /bkernel 2>&1 || true
                 findmnt -T /bkernel/build-evidence 2>&1 || true
               fi
               printf "top-level entries:\n"
               ls -lad /bkernel /bkernel/.kernel-source /bkernel/build-evidence 2>&1 || true
+              printf "workspace listing:\n"
+              ls -la /bkernel 2>&1 | head -100 || true
+              printf "evidence listing:\n"
+              ls -lah /bkernel/build-evidence 2>&1 | head -150 || true
               printf "============================================\n"
             }
-            trap 'rc=$?; dump_mount_state "container exit status=$rc"; exit "$rc"' EXIT
+            trap "rc=\$?; dump_mount_state \"container exit status=\$rc\"; exit \$rc" EXIT
             dump_mount_state "container start"
             KERNEL_BUILD_DIR="/bkernel/.kernel-source/$TOP_DIR"
             KERNEL_BUILD_DIR="$(readlink -f "$KERNEL_BUILD_DIR")"
