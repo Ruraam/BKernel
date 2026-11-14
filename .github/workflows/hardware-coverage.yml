@@ -130,6 +130,26 @@ jobs:
             --env "NVIDIA_SHA256=$NVIDIA_SHA256" \
             --env "TOP_DIR=$TOP_DIR" \
             --mount "type=bind,source=${{ github.workspace }},target=/bkernel" --workdir "/bkernel/.kernel-source/$TOP_DIR" bkernel-kernel-build:ci sh -ec '
+            dump_mount_state() {
+              label="$1"
+              printf "\n===== BKernel mount diagnostic: %s =====\n" "$label"
+              printf "cwd: "; pwd -P 2>&1 || true
+              printf "root: "; stat -c "%d:%i %n" / 2>&1 || true
+              printf "workspace: "; stat -c "%d:%i %n" /bkernel 2>&1 || true
+              printf "evidence: "; stat -c "%d:%i %n" /bkernel/build-evidence 2>&1 || true
+              printf "manifest: "; stat -c "%d:%i %s bytes %n" /bkernel/build-evidence/nvidia-patches.manifest 2>&1 || true
+              printf "mountinfo entries:\n"
+              grep -E " /bkernel( |/)" /proc/self/mountinfo 2>&1 || true
+              if command -v findmnt >/dev/null 2>&1; then
+                findmnt -T /bkernel 2>&1 || true
+                findmnt -T /bkernel/build-evidence 2>&1 || true
+              fi
+              printf "top-level entries:\n"
+              ls -lad /bkernel /bkernel/.kernel-source /bkernel/build-evidence 2>&1 || true
+              printf "============================================\n"
+            }
+            trap 'rc=$?; dump_mount_state "container exit status=$rc"; exit "$rc"' EXIT
+            dump_mount_state "container start"
             KERNEL_BUILD_DIR="/bkernel/.kernel-source/$TOP_DIR"
             KERNEL_BUILD_DIR="$(readlink -f "$KERNEL_BUILD_DIR")"
             printf "Kernel source directory: <%s>\\n" "$KERNEL_BUILD_DIR"
@@ -151,6 +171,7 @@ jobs:
 
             # Compile the complete kernel image and all configured modules.
             make LLVM=1 ARCH=x86_64 -j2 bzImage modules
+            dump_mount_state "after kernel image and modules build"
             test -s arch/x86/boot/bzImage
             test -s vmlinux
 
@@ -178,10 +199,12 @@ jobs:
             curl --fail --location --retry 3 --output "$NVIDIA_WORK/$NVIDIA_PACKAGE" "$NVIDIA_URL"
             printf "%s  %s\\n" "$NVIDIA_SHA256" "$NVIDIA_WORK/$NVIDIA_PACKAGE" | sha256sum --check --strict
             sh "$NVIDIA_WORK/$NVIDIA_PACKAGE" --check
+            dump_mount_state "after NVIDIA --check"
             (
               cd "$NVIDIA_WORK"
               sh "./$NVIDIA_PACKAGE" --extract-only
             )
+            dump_mount_state "after NVIDIA --extract-only"
             NVIDIA_SOURCE="$NVIDIA_WORK/NVIDIA-Linux-x86_64-$NVIDIA_VERSION"
             printf "NVIDIA extraction directory: <%s>\\n" "$NVIDIA_SOURCE"
             if [ ! -f "$NVIDIA_SOURCE/kernel/Makefile" ]; then
