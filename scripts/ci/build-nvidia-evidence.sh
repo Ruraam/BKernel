@@ -171,11 +171,11 @@ set -eu
           # NVIDIA's compiler check compares formatted version strings, not compiler identity.
           # Verify the kernel's recorded compiler is the exact installed Clang before bypassing
           # that formatting-only check (both are Debian Clang 19.1.7 in this pinned image).
-          KERNEL_COMPILER="$(sed -n 's/^#define LINUX_COMPILER "\\(.*\\)"/\\1/p' "$KERNEL_BUILD_DIR/include/generated/compile.h")"
+          KERNEL_COMPILER_LINE="$(grep '^#define LINUX_COMPILER ' "$KERNEL_BUILD_DIR/include/generated/compile.h")"
           CLANG_VERSION="$(clang --version | head -n 1)"
-          case "$KERNEL_COMPILER" in
+          case "$KERNEL_COMPILER_LINE" in
             *"$CLANG_VERSION"*) ;;
-            *) printf "Kernel compiler <%s> does not match installed Clang <%s>\\n" "$KERNEL_COMPILER" "$CLANG_VERSION" >&2; exit 1 ;;
+            *) printf "Kernel compiler <%s> does not match installed Clang <%s>\\n" "$KERNEL_COMPILER_LINE" "$CLANG_VERSION" >&2; exit 1 ;;
           esac
           if ! IGNORE_CC_MISMATCH=1 make -C "$NVIDIA_SOURCE/kernel" KERNEL_UNAME="$KERNEL_RELEASE" SYSSRC="$KERNEL_BUILD_DIR" SYSOUT="$KERNEL_BUILD_DIR" LLVM=1 CC=clang LD=ld.lld -j2 > /bkernel/build-evidence/nvidia-build.log 2>&1; then
             cat /bkernel/build-evidence/nvidia-build.log
