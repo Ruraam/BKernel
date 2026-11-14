@@ -171,8 +171,19 @@ set -eu
           # NVIDIA's compiler check compares formatted version strings, not compiler identity.
           # Verify the kernel's recorded compiler is the exact installed Clang before bypassing
           # that formatting-only check (both are Debian Clang 19.1.7 in this pinned image).
-          KERNEL_COMPILER_LINE="$(grep '^#define LINUX_COMPILER ' "$KERNEL_BUILD_DIR/include/generated/compile.h")"
+          # Kbuild records the compiler identity in the effective .config.
+          # compile.h is not guaranteed to contain LINUX_COMPILER on every
+          # kernel configuration, so validate CONFIG_CC_VERSION_TEXT instead.
+          KERNEL_COMPILER_LINE="$(sed -n 's/^CONFIG_CC_VERSION_TEXT="\\([^"]*\\)"/\\1/p' .config)"
           CLANG_VERSION="$(clang --version | head -n 1)"
+          if [ -z "$KERNEL_COMPILER_LINE" ]; then
+            printf "CONFIG_CC_VERSION_TEXT is missing from the effective kernel config\\n" >&2
+            exit 1
+          fi
+          if ! grep -qx 'CONFIG_CC_IS_CLANG=y' .config; then
+            printf "The kernel was not configured to use Clang\\n" >&2
+            exit 1
+          fi
           case "$KERNEL_COMPILER_LINE" in
             *"$CLANG_VERSION"*) ;;
             *) printf "Kernel compiler <%s> does not match installed Clang <%s>\\n" "$KERNEL_COMPILER_LINE" "$CLANG_VERSION" >&2; exit 1 ;;
