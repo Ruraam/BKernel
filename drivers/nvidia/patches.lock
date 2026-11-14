@@ -1,0 +1,14 @@
+schema = 1
+source_repository = "CachyOS/kernel-patches"
+source_commit = "21d721415790e6717b2ece16e82e08eb98d16c00"
+target_subdirectory = "kernel"
+
+[[patches]]
+name = "atomic-kms-default"
+path = "7.3/misc/nvidia-580xx/0001-Enable-atomic-kernel-modesetting-by-default.patch"
+blob_sha1 = "ffc13a0492cdb8eedcc104fe0d85395e5b5c67e5"
+
+[[patches]]
+name = "kde-hardware-cursor"
+path = "7.3/misc/nvidia-580xx/0002-fix-hw-cursor-kde.patch"
+blob_sha1 = "de49cfd425fdd1073144d10d0b6e0972370348f2"
