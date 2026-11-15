@@ -206,7 +206,20 @@ set -eu
               *) printf "Unexpected vermagic for %s: %s\\n" "$module" "$vermagic" >&2; exit 1 ;;
             esac
           done
-          (cd "$NVIDIA_SOURCE/kernel" && sha256sum nvidia.ko nvidia-modeset.ko nvidia-uvm.ko nvidia-drm.ko) > /bkernel/build-evidence/nvidia-modules.SHA256SUMS
+          # Hash every module actually produced, including optional modules such as
+          # nvidia-peermem. The four core modules above remain mandatory.
+          (
+            cd "$NVIDIA_SOURCE/kernel"
+            set -- *.ko
+            test -f "$1"
+            sha256sum "$@"
+          ) > /bkernel/build-evidence/nvidia-modules.SHA256SUMS
+
+          # Require the inventory and checksum manifest to describe exactly
+          # the same set of module files (no omissions or unexpected entries).
+          diff -u \
+            <(sort /bkernel/build-evidence/nvidia-modules.txt) \
+            <(awk '{name=$2; sub(/^\*/, "", name); sub(/^\.\//, "", name); print name}' /bkernel/build-evidence/nvidia-modules.SHA256SUMS | sort)
           sha256sum /bkernel/build-evidence/nvidia-build.log /bkernel/build-evidence/nvidia-build-environment.txt /bkernel/build-evidence/nvidia-modules.txt /bkernel/build-evidence/nvidia-modules.SHA256SUMS /bkernel/build-evidence/kernelrelease /bkernel/build-evidence/nvidia-patches.manifest > /bkernel/build-evidence/nvidia-build-evidence.SHA256SUMS
           rm -rf "$NVIDIA_WORK"
           sha256sum /bkernel/build-evidence/nvidia-pascal.config /bkernel/build-evidence/bzImage /bkernel/build-evidence/vmlinux /bkernel/build-evidence/System.map /bkernel/build-evidence/nouveau.o /bkernel/build-evidence/kernelrelease > /bkernel/build-evidence/kernel.SHA256SUMS
