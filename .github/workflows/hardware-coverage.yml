@@ -14,6 +14,7 @@ on:
       - "scripts/validate-nvidia-patches.py"
       - "scripts/ci/build-nvidia-evidence.sh"
       - "scripts/ci/package-kernel-devel.sh"
+      - "scripts/ci/package-kernel-devel-deb.sh"
       - "drivers/nvidia/patches.lock"
       - "drivers/nvidia/version.lock"
       - "configs/x86_64/bubbleos-desktop.config"
@@ -31,6 +32,7 @@ on:
       - "scripts/validate-nvidia-patches.py"
       - "scripts/ci/build-nvidia-evidence.sh"
       - "scripts/ci/package-kernel-devel.sh"
+      - "scripts/ci/package-kernel-devel-deb.sh"
       - "drivers/nvidia/patches.lock"
       - "drivers/nvidia/version.lock"
       - "configs/x86_64/bubbleos-desktop.config"
@@ -167,6 +169,43 @@ jobs:
             bkernel-kernel-build:ci sh /bkernel/scripts/ci/package-kernel-devel.sh
           test -s "build-evidence/kernel-devel/bkernel-kernel-devel-7.3.4-zen2-x86_64.tar.zst"
           test -s build-evidence/kernel-devel/SHA256SUMS
+
+      - name: Build and verify removable Debian kernel-devel package
+        env:
+          GITHUB_SHA: ${{ github.sha }}
+        run: |
+          TOP_DIR="$(python3 -c 'import pathlib,tomllib; print(tomllib.loads(pathlib.Path("kernel-source.toml").read_text())["top_dir"])')"
+          docker run --rm --user 0:0 \
+            --env "TOP_DIR=$TOP_DIR" \
+            --env "GITHUB_SHA=$GITHUB_SHA" \
+            --volume "${{ github.workspace }}:/bkernel" \
+            --workdir /bkernel \
+            bkernel-kernel-build:ci sh /bkernel/scripts/ci/package-kernel-devel-deb.sh
+          test -s build-evidence/deb/bkernel-headers-7.3.4-zen2_7.3.4-zen2-1_amd64.deb
+          test -s build-evidence/deb/SHA256SUMS
+          docker run --rm --user 0:0 \
+            --volume "${{ github.workspace }}:/bkernel:ro" \
+            --workdir / \
+            bkernel-kernel-build:ci sh -ec '
+              package=bkernel-headers-7.3.4-zen2
+              dpkg -i /bkernel/build-evidence/deb/bkernel-headers-7.3.4-zen2_7.3.4-zen2-1_amd64.deb
+              dpkg-query -s "$package" | grep -F "Status: install ok installed"
+              test -L /lib/modules/7.3.4-zen2/build
+              test -L /lib/modules/7.3.4-zen2/source
+              test -s /usr/src/bkernel-headers-7.3.4-zen2/linux-7.3.4/Module.symvers
+              dpkg --remove "$package"
+              test ! -e /usr/src/bkernel-headers-7.3.4-zen2
+              test ! -L /lib/modules/7.3.4-zen2/build
+              test ! -L /lib/modules/7.3.4-zen2/source
+            '
+
+      - name: Upload Debian kernel-devel package
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        with:
+          name: bkernel-headers-7.3.4-zen2-amd64-deb
+          path: build-evidence/deb/
+          if-no-files-found: error
+          retention-days: 30
 
       - name: Upload kernel-devel artifact
         uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
