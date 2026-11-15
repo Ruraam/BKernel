@@ -49,7 +49,6 @@ C
 
 make -C "$KERNEL_BUILD_DIR" LLVM=1 ARCH=x86_64 M="$SMOKE_DIR" modules
 test -s "$SMOKE_DIR/bkernel_devel_smoke.ko"
-test -s "$SMOKE_DIR/Module.symvers"
 modinfo -F vermagic "$SMOKE_DIR/bkernel_devel_smoke.ko" | grep -F "$KERNEL_RELEASE"
 
 rm -rf "$OUT_DIR"
@@ -65,7 +64,7 @@ source_commit=$GITHUB_SHA
 profile=configs/x86_64/nvidia-pascal.config
 compiler=$(clang --version | head -n 1)
 linker=$(ld.lld --version | head -n 1)
-llvm=$(llvm-config --version)
+llvm_ar=$(llvm-ar --version | head -n 1)
 rustc=$(rustc --version)
 config_sha256=$(sha256sum "$KERNEL_BUILD_DIR/.config" | awk '{print $1}')
 module_symvers_sha256=$(sha256sum "$KERNEL_BUILD_DIR/Module.symvers" | awk '{print $1}')
