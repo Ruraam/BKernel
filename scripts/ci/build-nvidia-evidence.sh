@@ -217,9 +217,10 @@ set -eu
 
           # Require the inventory and checksum manifest to describe exactly
           # the same set of module files (no omissions or unexpected entries).
-          diff -u \
-            <(sort /bkernel/build-evidence/nvidia-modules.txt) \
-            <(awk '{name=$2; sub(/^\*/, "", name); sub(/^\.\//, "", name); print name}' /bkernel/build-evidence/nvidia-modules.SHA256SUMS | sort)
+          sort /bkernel/build-evidence/nvidia-modules.txt > "$NVIDIA_WORK/inventory.sorted"
+          awk '{name=$2; sub(/^\*/, "", name); sub(/^\.\//, "", name); print name}' \
+            /bkernel/build-evidence/nvidia-modules.SHA256SUMS | sort > "$NVIDIA_WORK/checksums.sorted"
+          diff -u "$NVIDIA_WORK/inventory.sorted" "$NVIDIA_WORK/checksums.sorted"
           sha256sum /bkernel/build-evidence/nvidia-build.log /bkernel/build-evidence/nvidia-build-environment.txt /bkernel/build-evidence/nvidia-modules.txt /bkernel/build-evidence/nvidia-modules.SHA256SUMS /bkernel/build-evidence/kernelrelease /bkernel/build-evidence/nvidia-patches.manifest > /bkernel/build-evidence/nvidia-build-evidence.SHA256SUMS
           rm -rf "$NVIDIA_WORK"
           sha256sum /bkernel/build-evidence/nvidia-pascal.config /bkernel/build-evidence/bzImage /bkernel/build-evidence/vmlinux /bkernel/build-evidence/System.map /bkernel/build-evidence/nouveau.o /bkernel/build-evidence/kernelrelease > /bkernel/build-evidence/kernel.SHA256SUMS
