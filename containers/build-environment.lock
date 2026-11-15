@@ -9,7 +9,7 @@ dockerfile = "containers/kernel-build.Dockerfile"
 # CI records the complete dpkg-query inventory as a build artifact.
 packages = [
   "bc", "bison", "build-essential", "ca-certificates", "clang", "cpio",
-  "curl", "dwarves", "flex", "git", "kmod", "libelf-dev", "libncurses-dev",
+  "curl", "dwarves", "flex", "git", "kmod", "libdw-dev", "libelf-dev", "libncurses-dev",
   "libssl-dev", "libudev-dev", "libclang-dev", "lld", "llvm", "make",
   "openssl", "perl", "python3", "rsync", "rustc", "rust-src", "bindgen", "rustfmt", "rust-clippy", "cargo",
   "xz-utils", "zstd"
