@@ -82,9 +82,21 @@ EOF
 # Preserve the complete source/build tree: this intentionally favors a
 # reliable external-module Kbuild environment over a fragile header-only
 # subset. Proprietary NVIDIA sources are extracted under /tmp, not here.
+ARCHIVE="$OUT_DIR/bkernel-kernel-devel-$KERNEL_RELEASE-x86_64.tar.zst"
 tar --numeric-owner --owner=0 --group=0 -C "$(dirname "$KERNEL_BUILD_DIR")" \
-    -I 'zstd -T0 -10' -cf "$OUT_DIR/bkernel-kernel-devel-$KERNEL_RELEASE-x86_64.tar.zst" \
-    "$TOP_DIR"
+    -I 'zstd -T0 -10' -cf "$ARCHIVE" "$TOP_DIR"
+
+# Read the complete compressed archive back and assert that all external
+# Kbuild prerequisites are present in the published payload.
+tar -I 'zstd -d' -tf "$ARCHIVE" > "$OUT_DIR/archive.inventory"
+grep -Fqx "$TOP_DIR/.config" "$OUT_DIR/archive.inventory"
+grep -Fqx "$TOP_DIR/Module.symvers" "$OUT_DIR/archive.inventory"
+grep -Fqx "$TOP_DIR/include/config/auto.conf" "$OUT_DIR/archive.inventory"
+grep -Fqx "$TOP_DIR/include/generated/autoconf.h" "$OUT_DIR/archive.inventory"
+grep -Fqx "$TOP_DIR/include/generated/utsrelease.h" "$OUT_DIR/archive.inventory"
+grep -Fqx "$TOP_DIR/scripts/mod/modpost" "$OUT_DIR/archive.inventory"
+grep -Fqx "$TOP_DIR/scripts/basic/fixdep" "$OUT_DIR/archive.inventory"
+rm -f "$OUT_DIR/archive.inventory"
 
 (
     cd "$OUT_DIR"
